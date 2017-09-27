@@ -70,7 +70,7 @@ void os::Dispatcher::process(int time){
       if (tasksLimited && !isTasksAvaliable())
         return;
 
-      n == 3 ? n = 0 : ++n;
+      n == 1 ? n = 0 : ++n;
     }
   }
 }
