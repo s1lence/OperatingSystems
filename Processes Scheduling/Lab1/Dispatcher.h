@@ -60,6 +60,8 @@
      std::queue<os::Process>         m_queues[5];
      int                             m_clock;
 
+     const int maximum = 100;
+
    public:
      Dispatcher(int min, int max, int clock = 2) :m_minValue(min), m_maxValue(max), m_clock(clock), m_distribution(m_minValue, m_maxValue){ m_generator.seed(std::random_device()()); }
      ~Dispatcher() = default;
@@ -68,13 +70,15 @@
      
      void setClock(int clock){ m_clock = clock; }
 
-     void initQueues(int = 0);
+     void initQueues(int&, int = 0);
 
      void process(int);
 
      void report(std::ostream& stream);
 
      void reportInOrder(std::ostream& stream);
+
+     bool isTasksAvaliable()const;
 
    };
  

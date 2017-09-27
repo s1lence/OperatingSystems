@@ -22,7 +22,6 @@ int main(){
 
   os::Dispatcher dispacher(1, 10, 5);
 
-  dispacher.initQueues();
   dispacher.process(500);
 
   dispacher.reportInOrder(std::cout);

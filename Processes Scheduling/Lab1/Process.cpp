@@ -29,9 +29,9 @@ os::Process::Process(const Process& rhs)
 int os::Process::operator()(int time, int clock){
   m_delayed += time - m_lastVisitedAt; 
   m_served += clock;
-  int delta = m_complexity < m_served ? clock - m_complexity + m_served : clock;
-  m_lastVisitedAt = time + delta;
-  return delta;
+  int workTime = m_complexity < m_served ? clock + m_complexity - m_served : clock;
+  m_lastVisitedAt = time + workTime;
+  return workTime;
 }
 
 void os::Process::shutDown(){

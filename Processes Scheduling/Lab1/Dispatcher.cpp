@@ -16,12 +16,14 @@
  
 #include "Dispatcher.h"
 
-void os::Dispatcher::initQueues(int time){
+void os::Dispatcher::initQueues(int& added, int time){
   int randomValue = getRandom();
 
   for (int n = 0; n < randomValue; ++n){
-    if (getRandom() % 2 == 0)
+    if (getRandom() % 2 == 0){
       m_queues[0].push(Process(getRandom(), time));
+      ++added;
+    }
   }
 
 }
@@ -29,7 +31,9 @@ void os::Dispatcher::initQueues(int time){
 void os::Dispatcher::process(int time){
 
   m_queues[0].push(Process(getRandom())); /* initialize queue with at least one process */
-  initQueues();
+  int counter = 0;
+  bool tasksLimited = false;
+  initQueues(counter);
 
   for (int i = 0, n = 0; i < time; ){ /* all time range */
 
@@ -37,7 +41,10 @@ void os::Dispatcher::process(int time){
      *	here we need to decide if we add new process to queue
      *	and how many processes can be added at one time
      */
-    initQueues(i);
+    if (counter < maximum)
+      initQueues(counter, i);
+    else
+      tasksLimited = true;
       
     if (!m_queues[n].empty()){ /* process if not empty */
       i += m_queues[n].front()(i, m_clock);
@@ -53,12 +60,18 @@ void os::Dispatcher::process(int time){
         if (n != 3){ /* send task to 'worse' queue */
           m_queues[n + 1].push(m_queues[n].front());
           m_queues[n].pop();
+        } else { /* send task to the end of current queue */
+          m_queues[n].push(m_queues[n].front());
+          m_queues[n].pop();
         }
       }
-    }
 
-    if (m_queues[n].empty())
+    } else {
+      if (tasksLimited && !isTasksAvaliable())
+        return;
+
       n == 3 ? n = 0 : ++n;
+    }
   }
 }
 
@@ -85,4 +98,12 @@ void os::Dispatcher::reportInOrder(std::ostream& stream){
 
   for (auto i : values)
     i.report(stream);
+}
+
+bool os::Dispatcher::isTasksAvaliable() const{
+  for (int i = 0; i < 3; ++i)
+    if (!m_queues[i].empty())
+      return true;
+
+  return false;
 }
