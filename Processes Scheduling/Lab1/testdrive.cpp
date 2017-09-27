@@ -22,6 +22,8 @@ int main(){
 
   os::Dispatcher dispacher(1, 10, 5);
 
+  dispacher.setMaximumAmounthOfProcesses(25);
+
   dispacher.process(500);
 
   dispacher.reportInOrder(std::cout);

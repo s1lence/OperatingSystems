@@ -86,9 +86,10 @@ void os::Dispatcher::report(std::ostream& stream){
 
 void os::Dispatcher::reportInOrder(std::ostream& stream){
   stream << "Process number\tTime arrived\tComlexity\tTime solved\tTime delayed" << std::endl;
+  int sum = 0, count = m_queues[4].size();
 
   std::vector<os::Process> values;
-  values.reserve(m_queues[4].size());
+  values.reserve(count);
 
   while (!m_queues[4].empty()){
     values.push_back(m_queues[4].front());
@@ -96,8 +97,12 @@ void os::Dispatcher::reportInOrder(std::ostream& stream){
   }
   std::sort(values.begin(), values.end());
 
-  for (auto i : values)
+  for (auto i : values){
     i.report(stream);
+    sum += i.getDelay();
+  }
+
+  stream << "Average delay in queues for one process is equal " << sum / count << "." << std::endl;
 }
 
 bool os::Dispatcher::isTasksAvaliable() const{

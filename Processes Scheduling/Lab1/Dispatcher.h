@@ -60,10 +60,10 @@
      std::queue<os::Process>         m_queues[5];
      int                             m_clock;
 
-     const int maximum = 100;
+     int maximum;
 
    public:
-     Dispatcher(int min, int max, int clock = 2) :m_minValue(min), m_maxValue(max), m_clock(clock), m_distribution(m_minValue, m_maxValue){ m_generator.seed(std::random_device()()); }
+     Dispatcher(int min, int max, int clock = 2) : maximum(100), m_minValue(min), m_maxValue(max), m_clock(clock), m_distribution(m_minValue, m_maxValue){ m_generator.seed(std::random_device()()); }
      ~Dispatcher() = default;
 
      int getRandom(){ return m_distribution(m_generator); }
@@ -80,6 +80,7 @@
 
      bool isTasksAvaliable()const;
 
+     void setMaximumAmounthOfProcesses(int value){ maximum = value; }
    };
  
  }

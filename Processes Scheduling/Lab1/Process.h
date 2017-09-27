@@ -67,6 +67,8 @@ namespace os{
     bool solved()const{ return m_served > m_complexity; }
     void shutDown();
 
+    int getDelay()const{ return m_delayed; }
+
     void report(std::ostream& stream);
   };
 
