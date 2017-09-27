@@ -20,12 +20,13 @@
 
 int main(){
 
-  os::Dispatcher dispacher(5, 12, 10);
+  os::Dispatcher dispacher(1, 10, 5);
 
   dispacher.initQueues();
-  dispacher.process(200);
+  dispacher.process(500);
 
-  dispacher.report(std::cout);
+  dispacher.reportInOrder(std::cout);
+  std::cout.flush();
 
   return 0;
 }

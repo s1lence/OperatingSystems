@@ -58,11 +58,14 @@ namespace os{
 
   public:
     Process(int complexity, int arrived = 0);
+    Process(const Process& rhs);
     ~Process() = default;
 
-    void operator()(int time){ m_delayed += time - m_lastVisitedAt; m_served += m_lastVisitedAt = time; }
-    bool solved()const{ return m_served < m_complexity; }
-    void shutDown(){ m_solved = m_lastVisitedAt; }
+    int operator()(int time, int clock);
+
+    bool operator<(const Process& rhs){ return m_number < rhs.m_number; }
+    bool solved()const{ return m_served > m_complexity; }
+    void shutDown();
 
     void report(std::ostream& stream);
   };

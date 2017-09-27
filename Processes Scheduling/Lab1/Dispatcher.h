@@ -20,9 +20,11 @@
 
 #include "Process.h"
 
+#include<algorithm>
 #include<ostream>
 #include<queue>
 #include<random>
+#include<vector>
 
  namespace os{
  
@@ -72,9 +74,7 @@
 
      void report(std::ostream& stream);
 
-     /*void cycle(int);
-     void pass(std::queue<os::Process>&);
-     void halt();*/
+     void reportInOrder(std::ostream& stream);
 
    };
  

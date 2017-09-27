@@ -31,64 +31,58 @@ void os::Dispatcher::process(int time){
   m_queues[0].push(Process(getRandom())); /* initialize queue with at least one process */
   initQueues();
 
-  for (int i = 0; i < time; i += m_clock){ /* all time range */
+  for (int i = 0, n = 0; i < time; ){ /* all time range */
 
     /*
      *	here we need to decide if we add new process to queue
      *	and how many processes can be added at one time
      */
     initQueues(i);
-
-    /*int randomChance = getRandom();
-    for (int n = 0; n < randomChance; ++n){
-
-      if (getRandom() % 2 == 0)
-        m_queues[0].push(Process(getRandom(), time));
-    }
-*/
-    for (int n = 0; n < 4; ++n){ /* through all queues */
       
-      if (!m_queues[n].empty()){ /* process if not empty */
-        m_queues[n].front()(m_clock);
+    if (!m_queues[n].empty()){ /* process if not empty */
+      i += m_queues[n].front()(i, m_clock);
 
-        if (m_queues[n].front().solved()){ /* save result if solved */
-          m_queues[n].front().shutDown();
+      if (m_queues[n].front().solved()){ /* save result if solved */
+        m_queues[n].front().shutDown();
 
-          m_queues[4].push(m_queues[n].front()); /* last queue holds results */
+        m_queues[4].push(m_queues[n].front()); /* last queue holds results */
+        m_queues[n].pop();
+
+      } else { /* if not solved and not the 'worst' queue */
+
+        if (n != 3){ /* send task to 'worse' queue */
+          m_queues[n + 1].push(m_queues[n].front());
           m_queues[n].pop();
-
-        } else { /* if not solved and not the 'worst' queue */
-
-          if (n != 3){ /* send task to 'worse' queue */
-            m_queues[n + 1].push(m_queues[n].front());
-            m_queues[n].pop();
-          }
         }
       }
     }
+
+    if (m_queues[n].empty())
+      n == 3 ? n = 0 : ++n;
   }
-    /*  cycle(i);*/
 }
 
 void os::Dispatcher::report(std::ostream& stream){
+  stream << "Process number\tTime arrived\tComlexity\tTime solved\tTime delayed"<< std::endl;
+
   while (!m_queues[4].empty()){
     m_queues[4].front().report(stream);
+    m_queues[4].pop();
   }
 }
 
-//
-//void os::Dispatcher::cycle(int time){
-//  /*for (int i = 0; i < 4; ++i)
-//    pass(m_queues[i]);*/
-//  /*for (int i = 0; i < 4; ++i){
-//    m_queues[i].front()
-//  }*/
-//}
-//
-//void os::Dispatcher::pass(std::queue<os::Process>& Q){
-//
-//}
-//
-//void os::Dispatcher::halt(){
-//
-//}
+void os::Dispatcher::reportInOrder(std::ostream& stream){
+  stream << "Process number\tTime arrived\tComlexity\tTime solved\tTime delayed" << std::endl;
+
+  std::vector<os::Process> values;
+  values.reserve(m_queues[4].size());
+
+  while (!m_queues[4].empty()){
+    values.push_back(m_queues[4].front());
+    m_queues[4].pop();
+  }
+  std::sort(values.begin(), values.end());
+
+  for (auto i : values)
+    i.report(stream);
+}
