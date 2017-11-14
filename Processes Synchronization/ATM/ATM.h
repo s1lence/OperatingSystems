@@ -16,7 +16,9 @@
  
  #ifndef _ATM_H_
  #define _ATM_H_
- 
+
+#include "Terminal.h"
+
 #include<map>
 
  namespace atm{
@@ -45,7 +47,7 @@
       * 
       */
       
-     typedef terminal::Terminal<ATM>  _m_terminal_t;
+     using _m_terminal_t = terminal::Terminal<ATM>;
      using _m_database_t = std::map<int, int>;
 
      _m_terminal_t  m_first;
@@ -75,9 +77,12 @@
 
       /* cash management */
 
-     bool proceedRequest(int const * account, int amount){ return m_accsDBase.find(*account) == m_accsDBase.end() || m_accsDBase[*account] < amount ? false : issueCash(amount); }
+     bool proceedRequest(int const * account, int amount){ return m_accsDBase.find(*account) == m_accsDBase.end() || m_accsDBase[*account] < amount ? false : issueCash(*account, amount); }
 
-     bool issueCash(int amount);
+     bool issueCash(int account, int amount); /* handles cash issues */
+
+   private:
+     bool getCash(int sum); /* manages cash amount */
 
    };
  
