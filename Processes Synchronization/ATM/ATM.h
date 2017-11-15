@@ -51,26 +51,26 @@
      using _m_terminal_t = terminal::Terminal<ATM>;
      using _m_database_t = std::map<int, int>;
 
-     _m_terminal_t  m_first;
-     _m_terminal_t  m_second;
+     _m_terminal_t *  m_first;
+     _m_terminal_t *  m_second;
 
-     _m_database_t  m_accsDBase;
-     _m_database_t  m_cashDBase;
+     _m_database_t    m_accsDBase;
+     _m_database_t    m_cashDBase;
 
-     int            m_queue;
+     int              m_queue;
 
    public:
 
       /* terminal management */
 
-     bool isMyTurn(_m_terminal_t* whoAsks) const{ return m_queue == (whoAsks == &m_first ? m_first.queueState() : m_second.queueState()); }
+     bool isMyTurn(_m_terminal_t* whoAsks) const{ return m_queue == (whoAsks == m_first ? m_first->queueState() : m_second->queueState()); }
 
       /* queue management */
 
      void setQueueState(int value){ m_queue = value; }
      int  getQueueState() const{ return m_queue; }
      
-     int getNextQueueState(_m_terminal_t *terminal) const{ return terminal == &m_first ? m_second.queueState() : m_first.queueState(); }
+     int getNextQueueState(_m_terminal_t *terminal) const{ return terminal == m_first ? m_second->queueState() : m_first->queueState(); }
 
       /* account management */
 

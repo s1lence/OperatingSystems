@@ -45,14 +45,18 @@
       */
       
      AbstractATM const *  m_atm;
-     int            m_attempt;
+     int                  m_attempt;
      
-     const int m_queueState;
+     const int            m_queueState;
 
    public:
+      /* prohibited stuff */
      Terminal() = delete;
-     Terminal(AbstractATM const *atm, int queueState) :m_atm(atm), m_attempt(0), m_queueState(queueState){}
      Terminal(const Terminal&) = delete;
+
+      /* object creation requires atm & queue state */
+     Terminal(AbstractATM const *atm, int queueState) :m_atm(atm), m_attempt(0), m_queueState(queueState){}
+
      ~Terminal() = default;
 
       /* Account represents account type that m_atm can work with */

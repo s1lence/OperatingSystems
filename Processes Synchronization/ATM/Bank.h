@@ -18,7 +18,6 @@
  #define _BANK_H_
 
 #include "ATM.h"
-#include "Terminal.h"
  
  namespace bank{
  
@@ -33,6 +32,7 @@
       * 
       * DESCRIPTION:     bank model
       *                  handles all required bank stuff
+      *                  manages atm-terminal communication
       * 
       * `notes           none
       * 
@@ -46,6 +46,12 @@
       * 
       */
       
+     using _atm_t = atm::ATM;
+     using _trm_t = terminal::Terminal<_atm_t>;
+
+     _atm_t   m_atm;
+     _trm_t   m_trm_1;
+     _trm_t   m_trm_2;
 
 
    };
