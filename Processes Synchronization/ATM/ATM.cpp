@@ -29,7 +29,15 @@ bool atm::ATM::issueCash(int account, int amount){
 
 bool atm::ATM::getCash(int sum){
 
+  std::vector<std::pair<int, int>> cash = { { 100, 0 }, { 50, 0 }, { 20, 0 }, { 10, 0 }, { 5, 0 }, { 2, 0 }, { 1, 0 } };
 
+  for (auto &it : cash)
+    sum -= (sum / it.first > m_cashDBase[it.first] ? it.second = m_cashDBase[it.first] : it.second = sum / it.first, it.first*it.second);
+  
+  if (sum) return false; /* not enough cash */
+
+  for (auto &it : cash)
+    m_cashDBase[it.first] -= it.second;
 
   return true;
 }

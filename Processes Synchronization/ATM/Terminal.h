@@ -44,14 +44,14 @@
       * 
       */
       
-     AbstractATM *  m_atm;
+     AbstractATM const *  m_atm;
      int            m_attempt;
      
      const int m_queueState;
 
    public:
      Terminal() = delete;
-     Terminal(AbstractATM *atm, int queueState) :m_atm(atm), m_attempt(0), m_queueState(queueState){}
+     Terminal(AbstractATM const *atm, int queueState) :m_atm(atm), m_attempt(0), m_queueState(queueState){}
      Terminal(const Terminal&) = delete;
      ~Terminal() = default;
 

@@ -20,6 +20,7 @@
 #include "Terminal.h"
 
 #include<map>
+#include<vector>
 
  namespace atm{
  
