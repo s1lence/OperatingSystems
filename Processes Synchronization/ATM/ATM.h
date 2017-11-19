@@ -19,8 +19,8 @@
 
 #include "Terminal.h"
 
+#include<array>
 #include<map>
-#include<vector>
 
  namespace atm{
  
@@ -61,9 +61,19 @@
 
    public:
 
+      /* ctors/dtors */
+
+     ATM() = delete;
+
+      /* atm requires at least two terminals or existing atm */
+     ATM(_m_terminal_t *first, _m_terminal_t *second) :m_first(first), m_second(second), m_queue(m_first->queueState()){}
+     ATM(const ATM &atm) :ATM(atm.m_first, atm.m_second){}
+
+     ~ATM() = default;
+
       /* terminal management */
 
-     bool isMyTurn(_m_terminal_t* whoAsks) const{ return m_queue == (whoAsks == m_first ? m_first->queueState() : m_second->queueState()); }
+     bool isResourceBusy(_m_terminal_t* whoAsks) const{ return (whoAsks == m_first ? m_second->attempted() : m_first->attempted()); }
 
       /* queue management */
 
@@ -75,6 +85,8 @@
       /* account management */
 
      void addNewAccount(int account, int cash){ m_accsDBase[account] = cash; }
+
+     void receiveCash(int bill, int amount){ m_cashDBase[bill] += amount; }
 
       /* cash management */
 

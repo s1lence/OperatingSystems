@@ -16,7 +16,8 @@
  
 #include "ATM.h"
 
-bool atm::ATM::issueCash(int account, int amount){
+bool atm::ATM::issueCash(int account, int amount)
+{
    /* check if we have enough money to pay */
   if (getCash(amount)){
     
@@ -27,9 +28,11 @@ bool atm::ATM::issueCash(int account, int amount){
   return false; /* fails */
 }
 
-bool atm::ATM::getCash(int sum){
-
-  std::vector<std::pair<int, int>> cash = { { 100, 0 }, { 50, 0 }, { 20, 0 }, { 10, 0 }, { 5, 0 }, { 2, 0 }, { 1, 0 } };
+bool atm::ATM::getCash(int sum)
+{
+  std::array<std::pair<int, int>, 7> cash = {
+    std::make_pair(100, 0), std::make_pair(50, 0), std::make_pair(20, 0), std::make_pair(10, 0), std::make_pair(5, 0), std::make_pair(2, 0), std::make_pair(1, 0)
+  };
 
   for (auto &it : cash)
     sum -= (sum / it.first > m_cashDBase[it.first] ? it.second = m_cashDBase[it.first] : it.second = sum / it.first, it.first*it.second);

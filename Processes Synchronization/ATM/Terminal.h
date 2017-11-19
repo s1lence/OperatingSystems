@@ -45,7 +45,7 @@
       */
       
      AbstractATM const *  m_atm;
-     int                  m_attempt;
+     int mutable          m_attempt;
      
      const int            m_queueState;
 
@@ -70,13 +70,15 @@
      int queueState() const{ return m_queueState; }
    };
 
+   
+   template<class AbstractATM>
    template<class Account>
-   bool terminal::Terminal::withdrawCash(int amount, Account const * account) const{
+   bool terminal::Terminal<AbstractATM>::withdrawCash(int amount, Account const * account) const{
      
      m_attempt = 1;
 
       /* Dekker's algorithm */
-     while (!m_atm->isMyTurn(this)){
+     while (m_atm->isResourceBusy(this)){
        
        if (m_queueState != m_atm->getQueueState()){
          m_attempt = 0;
