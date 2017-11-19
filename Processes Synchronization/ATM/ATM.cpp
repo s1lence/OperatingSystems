@@ -16,6 +16,16 @@
  
 #include "ATM.h"
 
+atm::ATM& atm::ATM::operator=(const ATM &atm)
+{
+  m_first = atm.m_first;
+  m_second = atm.m_second;
+  m_accsDBase = atm.m_accsDBase;
+  m_cashDBase = atm.m_cashDBase;
+
+  return *this;
+}
+
 bool atm::ATM::issueCash(int account, int amount)
 {
    /* check if we have enough money to pay */

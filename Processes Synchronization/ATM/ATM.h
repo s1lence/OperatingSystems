@@ -71,16 +71,18 @@
 
      ~ATM() = default;
 
+     ATM& operator=(const ATM &atm);
+
       /* terminal management */
 
-     bool isResourceBusy(_m_terminal_t* whoAsks) const{ return (whoAsks == m_first ? m_second->attempted() : m_first->attempted()); }
+     bool isResourceBusy(_m_terminal_t const* whoAsks) const{ return (whoAsks == m_first ? m_second->attempted() : m_first->attempted()); }
 
       /* queue management */
 
      void setQueueState(int value){ m_queue = value; }
      int  getQueueState() const{ return m_queue; }
      
-     int getNextQueueState(_m_terminal_t *terminal) const{ return terminal == m_first ? m_second->queueState() : m_first->queueState(); }
+     int getNextQueueState(_m_terminal_t const *terminal) const{ return terminal == m_first ? m_second->queueState() : m_first->queueState(); }
 
       /* account management */
 

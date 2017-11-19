@@ -61,10 +61,10 @@
 
       /* Account represents account type that m_atm can work with */
      template<class Account>
-     bool withdrawCash(int amount, Account const * account) const;
+     bool withdrawCash(int amount, Account const && account) const;
 
       /* returns true if terminal tries to process the request */
-     bool attempted() const{ return m_attempt; }
+     bool attempted() const{ return 0 != m_attempt; }
 
       /* returns queue state for this terminal */
      int queueState() const{ return m_queueState; }
@@ -73,7 +73,7 @@
    
    template<class AbstractATM>
    template<class Account>
-   bool terminal::Terminal<AbstractATM>::withdrawCash(int amount, Account const * account) const{
+   bool terminal::Terminal<AbstractATM>::withdrawCash(int amount, Account const && account) const{
      
      m_attempt = 1;
 
@@ -89,11 +89,11 @@
      }
 
       /* critical section */
-     bool result = m_atm->proceedRequest(account, amount);
+     bool result = const_cast<AbstractATM*>(m_atm)->proceedRequest(&account, amount);
 
       /* release the resource */
      m_attempt = 0;
-     m_atm->setQueueState(m_atm->getNextQueueState(this));
+     const_cast<AbstractATM*>(m_atm)->setQueueState(m_atm->getNextQueueState(this));
 
      return result;
    }

@@ -52,6 +52,6 @@ void bank::Bank::start(int min, int max, int rounds)
 
   generator.seed(std::random_device()());
 
-  auto firstTermRes = std::async(std::launch::async, [&](){while (rounds--) m_trm_1.withdrawCash(distribution(generator), &std::forward<int&>(distribution(generator))); });
-  auto secondTermRes = std::async(std::launch::async, [&](){while (rounds--) m_trm_2.withdrawCash(distribution(generator), &std::forward<int&>(distribution(generator))); });
+  auto firstTermRes = std::async(std::launch::async, [&](){while (rounds--) m_trm_1.withdrawCash(distribution(generator), distribution(generator)); });
+  auto secondTermRes = std::async(std::launch::async, [&](){while (rounds--) m_trm_2.withdrawCash(distribution(generator), distribution(generator)); });
 }
