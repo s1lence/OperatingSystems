@@ -1,7 +1,7 @@
 /*
  * `file`          Common.h
  * `written`       November 20 2017 21:21:58
- * `last modified` November 20 2017 21:21:58
+ * `last modified` November 20 2017 23:33:42
  * 
  * Author:         R. Neshta
  * Contact:        Ruslan.Neshta@gmail.com
@@ -20,7 +20,7 @@
 
 #define RICHNESS_COEFFICIENT 4
 #define BILLS_AVAILABILITY_COEFFICIENT 7
-#define GREEDY_COEFFICIENT 6
+#define GREEDINESS_COEFFICIENT 6
 
 #ifdef _DEBUG
 

@@ -1,7 +1,7 @@
 /*
  * `file`          Terminal.h
  * `written`       November 14 2017 14:57:06
- * `last modified` November 14 2017 14:57:06
+ * `last modified` November 20 2017 23:33:42
  * 
  * Author:         R. Neshta
  * Contact:        Ruslan.Neshta@gmail.com
@@ -20,15 +20,15 @@
 #ifdef _DEBUG
 
 #include<iomanip>
+#include<iostream>
 
 #ifdef BILLS_REPORT
 #include<sstream>
 #endif // BILLS_REPORT
 
+
 #endif // _DEBUG
 
-
-#include<iostream>
  
  namespace terminal{
  
@@ -102,9 +102,12 @@
      }
 
 #ifdef _DEBUG
-     /* console report */
-     std::cout <<"_________________________________________________________________________________________________________________________________________\n" <<std::endl;
-   
+     /* console report */    
+     std::cout << std::endl;
+     for (int i = 0; i < 130; ++i)
+       std::cout << '_';
+     std::cout << std::endl;
+
 #ifdef BILLS_REPORT
 
      std::stringstream tmp;
@@ -132,7 +135,10 @@
 
 #endif // BILLS_REPORT
 
-     std::cout << "\n_________________________________________________________________________________________________________________________________________" << std::endl;
+     std::cout << std::endl;
+     for (int i = 0; i < 130; ++i)
+       std::cout << '_';
+     std::cout << std::endl;
 #endif // _DEBUG
 
       /* release the resource */

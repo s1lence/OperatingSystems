@@ -1,7 +1,7 @@
 /*
  * `file`          Bank.h
  * `written`       November 14 2017 18:54:24
- * `last modified` November 14 2017 18:54:24
+ * `last modified` November 20 2017 23:33:42
  * 
  * Author:         R. Neshta
  * Contact:        Ruslan.Neshta@gmail.com

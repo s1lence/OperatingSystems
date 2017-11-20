@@ -1,7 +1,7 @@
 /*
  * `file`          Bank.cpp
  * `written`       November 19 2017 17:20:24
- * `last modified` November 19 2017 17:20:24
+ * `last modified` November 20 2017 23:33:42
  * 
  * Author:         R. Neshta
  * Contact:        Ruslan.Neshta@gmail.com
@@ -78,6 +78,6 @@ void bank::Bank::start(int min, int max, int rounds)
 
   generator.seed(std::random_device()());
 
-  auto r1 = std::async(std::launch::async, [&, rounds]()mutable{while (rounds--) m_trm_1.withdrawCash(distribution(generator)*GREEDY_COEFFICIENT, distribution(generator), rounds + 1); });
-  auto r2 = std::async(std::launch::async, [&, rounds]()mutable{while (rounds--) m_trm_2.withdrawCash(distribution(generator)*GREEDY_COEFFICIENT, distribution(generator), rounds + 1); });
+  auto r1 = std::async(std::launch::async, [&, rounds]()mutable{while (rounds--) m_trm_1.withdrawCash(distribution(generator)*GREEDINESS_COEFFICIENT, distribution(generator), rounds + 1); });
+  auto r2 = std::async(std::launch::async, [&, rounds]()mutable{while (rounds--) m_trm_2.withdrawCash(distribution(generator)*GREEDINESS_COEFFICIENT, distribution(generator), rounds + 1); });
 }
