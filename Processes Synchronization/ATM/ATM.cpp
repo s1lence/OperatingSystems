@@ -26,16 +26,42 @@ atm::ATM& atm::ATM::operator=(const ATM &atm)
   return *this;
 }
 
-bool atm::ATM::issueCash(int account, int amount)
+#ifdef _DEBUG
+
+bool atm::ATM::proceedRequest(int const * account, int amount)
 {
+  std::cout << "account - '" << std::setw(3) << *account << "', money - '" << std::setw(3) << m_accsDBase[*account] << "'" << ", trying to issue - '" << std::setw(3) << amount << "'";
+
+  if (m_accsDBase.find(*account) == m_accsDBase.end()){
+    std::cout << "; transaction denied: account does not exist." << std::endl;
+    return false;
+  }
+
+  if (m_accsDBase[*account] < amount){
+    std::cout << "; transaction denied: not enough money." << std::endl;
+    return false;
+  }
+  bool res = issueCash(*account, amount);
+  if (res)
+    std::cout << "\n; transaction succeeded: issued " << amount << " UAH." << std::endl;
+
+  return res;
+}
+
+#endif // _DEBUG
+
+bool atm::ATM::issueCash(int account, int amount)
+{  
    /* check if we have enough money to pay */
   if (getCash(amount)){
     
     m_accsDBase[account] -= amount;
     return true; /* succeeded */
   }
+#ifdef _DEBUG
+  std::cout << "; transaction denied: not enough bills" << std::endl;
+#endif // _DEBUG
 
-  std::cout << "transaction denied: not enough bills" << std::endl;
   return false; /* fails */
 }
 
@@ -49,6 +75,20 @@ bool atm::ATM::getCash(int sum)
     sum -= (sum / it.first > m_cashDBase[it.first] ? it.second = m_cashDBase[it.first] : it.second = sum / it.first, it.first*it.second);
   
   if (sum) return false; /* not enough cash */
+
+#ifdef _DEBUG
+#ifdef MONEY_REPORT
+
+  std::cout << "\n\nMoney issued:" << std::endl;
+  
+  for(auto i:cash)
+    if(i.second) std::cout << i.first << " UAH ~ " << i.second << " bills; ";
+
+  std::cout << std::endl;
+
+#endif // MONEY_REPORT
+#endif // _DEBUG
+  
 
   for (auto &it : cash)
     m_cashDBase[it.first] -= it.second;

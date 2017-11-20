@@ -24,24 +24,50 @@ void bank::Bank::init(int min, int max)
   
   generator.seed(std::random_device()());
 
-  fillAccountsDatabasse(&distribution, &generator,200);
-  fillCashDatabase(&distribution, &generator,200);
+  fillAccountsDatabasse(&distribution, &generator, max);
+  fillCashDatabase(&distribution, &generator, max);
 }
 
 void bank::Bank::fillAccountsDatabasse(_dstrb *distribution, _rndgn *generator, int rounds)
 {
   while (rounds--)
-    m_atm.addNewAccount((*distribution)(*generator), (*distribution)(*generator));
+    m_atm.addNewAccount(rounds, (*distribution)(*generator) * RICHNESS_COEFFICIENT);
 }
 
 void bank::Bank::fillCashDatabase(_dstrb *distribution, _rndgn *generator, int rounds)
 {
   std::array<int, 7> cash = { 100, 50, 20, 10, 5, 2, 1 };
   
-  while(rounds--){
+  while (rounds -= BILLS_AVAILABILITY_COEFFICIENT, rounds > 0){
 
     for (auto i : cash)
       m_atm.receiveCash(i, (*distribution)(*generator) / i);
+  }
+}
+
+void bank::Bank::fillAccountsDatabaseInRange(int min, int max, int rounds)
+{
+  _rndgn   generator;
+  _dstrb   distribution(min, max);
+
+  generator.seed(std::random_device()());
+
+  while (rounds--)
+    m_atm.addNewAccount(rounds, distribution(generator) * RICHNESS_COEFFICIENT);
+}
+
+void bank::Bank::fillCashDatabaseInRange(int min, int max, int rounds)
+{
+  _rndgn   generator;
+  _dstrb   distribution(min, max);
+
+  generator.seed(std::random_device()());
+  std::array<int, 7> cash = { 100, 50, 20, 10, 5, 2, 1 };
+
+  while (rounds -= BILLS_AVAILABILITY_COEFFICIENT, rounds > 0){
+
+    for (auto i : cash)
+      m_atm.receiveCash(i, distribution(generator) / i);
   }
 }
 
@@ -52,6 +78,6 @@ void bank::Bank::start(int min, int max, int rounds)
 
   generator.seed(std::random_device()());
 
-  std::async(std::launch::async, [&, rounds]()mutable{while (rounds--) m_trm_1.withdrawCash(distribution(generator), distribution(generator), rounds + 1); });
-  std::async(std::launch::async, [&, rounds]()mutable{while (rounds--) m_trm_2.withdrawCash(distribution(generator), distribution(generator), rounds + 1); });
+  auto res = std::async(std::launch::async, [&, rounds]()mutable{while (rounds--) m_trm_1.withdrawCash(distribution(generator)*GREEDY_COEFFICIENT, distribution(generator), rounds + 1); });
+  res = std::async(std::launch::async, [&, rounds]()mutable{while (rounds--) m_trm_2.withdrawCash(distribution(generator)*GREEDY_COEFFICIENT, distribution(generator), rounds + 1); });
 }

@@ -17,6 +17,7 @@
  #ifndef _BANK_H_
  #define _BANK_H_
 
+
 #include "ATM.h"
 
 #include<future>
@@ -75,7 +76,17 @@
 
      void fillCashDatabase(_dstrb *distribution, _rndgn *generator, int rounds);
 
+     void fillAccountsDatabaseInRange(int min, int max, int rounds);
+
+     void fillCashDatabaseInRange(int min, int max, int rounds);
+
      void start(int min, int max, int rounds);
+
+#ifdef _DEBUG
+
+     void cashAvailablilityReport() const{ m_atm.reportCashDBase(std::cout); std::cout << std::endl; }
+
+#endif // _DEBUG
 
    };
  

@@ -17,6 +17,17 @@
  #ifndef _TERMINAL_H_
  #define _TERMINAL_H_
 
+#ifdef _DEBUG
+
+#include<iomanip>
+
+#ifdef BILLS_REPORT
+#include<sstream>
+#endif // BILLS_REPORT
+
+#endif // _DEBUG
+
+
 #include<iostream>
  
  namespace terminal{
@@ -90,11 +101,39 @@
        }
      }
 
+#ifdef _DEBUG
      /* console report */
-     std::cout << '[' << round << ']' << "Terminal " << m_queueState << "uses atm: ";
+     std::cout <<"_________________________________________________________________________________________________________________________________________\n" <<std::endl;
+   
+#ifdef BILLS_REPORT
+
+     std::stringstream tmp;
+     m_atm->reportCashDBase(tmp); 
+
+#endif // BILLS_REPORT
+
+     std::cout << std::endl << std::endl;
+     std::cout << '[' << std::setw(3) << round << std::setw(2) << ']' << " Terminal #" << m_queueState << " uses atm: ";
+
+#endif // _DEBUG
 
       /* critical section */
      bool result = const_cast<AbstractATM*>(m_atm)->proceedRequest(&account, amount);
+
+#ifdef _DEBUG
+
+#ifdef BILLS_REPORT
+
+     std::cout << "\nBills bank before transaction:\n" << tmp.str();
+     std::cout << "\n\nBills bank after transaction:\n";
+
+     m_atm->reportCashDBase(std::cout);
+     std::cout << std::endl;
+
+#endif // BILLS_REPORT
+
+     std::cout << "\n_________________________________________________________________________________________________________________________________________" << std::endl;
+#endif // _DEBUG
 
       /* release the resource */
      m_attempt = 0;

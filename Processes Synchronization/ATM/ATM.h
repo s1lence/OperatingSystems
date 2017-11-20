@@ -17,6 +17,7 @@
  #ifndef _ATM_H_
  #define _ATM_H_
 
+#include "Common.h"
 #include "Terminal.h"
 
 #include<array>
@@ -91,25 +92,15 @@
      void receiveCash(int bill, int amount){ m_cashDBase[bill] += amount; }
 
       /* cash management */
+#ifdef _DEBUG
 
-     bool proceedRequest(int const * account, int amount){
+     bool proceedRequest(int const * account, int amount);
 
-       if (m_accsDBase.find(*account) == m_accsDBase.end()){
-         std::cout << "transaction denied: account does not exist." << std::endl;
-         return false;
-       }
+     void reportCashDBase(std::ostream& str) const{ for (auto i : m_cashDBase) str << i.first << " UAH ~ " << i.second << " bills; "; }
+#else
 
-       if (m_accsDBase[*account] < amount){
-         std::cout << "transaction denied: not enough money." << std::endl;
-         return false;
-       }
-       bool res = issueCash(*account, amount);
-       if (res)
-         std::cout << "issued " << amount << " UAH." << std::endl;
-
-       return res;
-     }
-       //{ return m_accsDBase.find(*account) == m_accsDBase.end() || m_accsDBase[*account] < amount ? false : issueCash(*account, amount); }
+     bool proceedRequest(int const * account, int amount){ return m_accsDBase.find(*account) == m_accsDBase.end() || m_accsDBase[*account] < amount ? false : issueCash(*account, amount); }
+#endif // _DEBUG
 
      bool issueCash(int account, int amount); /* handles cash issues */
 

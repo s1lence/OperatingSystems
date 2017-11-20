@@ -13,19 +13,32 @@
  * 
  * `note`          none
  */
- 
+
+
 #include "Bank.h"
 
 #include<string>
+#include<conio.h>
 
 int main(){
 
   bank::Bank b;
-  b.init(0, 100);
-  b.start(0, 100, 100);
+  b.fillAccountsDatabaseInRange(12, 75, 100);
+  b.fillCashDatabaseInRange(1, 35, 10);
+  b.fillCashDatabaseInRange(35, 200, 15);
 
-  std::string buf;
-  getline(std::cin, buf);
+  std::cout << "Bills bank:" << std::endl;
+  b.cashAvailablilityReport();
+
+  std::cout << std::endl << "Bank opened. Transactions history:" << std::endl;
+  b.start(1, 20, 45);
+
+  /*std::string buf;
+  getline(std::cin, buf);*/
+  
+
+  std::getchar();
+ 
 
   return 0;
 }

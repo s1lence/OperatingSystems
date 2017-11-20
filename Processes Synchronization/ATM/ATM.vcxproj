@@ -66,6 +66,7 @@
   <ItemGroup>
     <ClInclude Include="ATM.h" />
     <ClInclude Include="Bank.h" />
+    <ClInclude Include="Common.h" />
     <ClInclude Include="Terminal.h" />
   </ItemGroup>
   <ItemGroup>
