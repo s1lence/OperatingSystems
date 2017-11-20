@@ -92,7 +92,24 @@
 
       /* cash management */
 
-     bool proceedRequest(int const * account, int amount){ return m_accsDBase.find(*account) == m_accsDBase.end() || m_accsDBase[*account] < amount ? false : issueCash(*account, amount); }
+     bool proceedRequest(int const * account, int amount){
+
+       if (m_accsDBase.find(*account) == m_accsDBase.end()){
+         std::cout << "transaction denied: account does not exist." << std::endl;
+         return false;
+       }
+
+       if (m_accsDBase[*account] < amount){
+         std::cout << "transaction denied: not enough money." << std::endl;
+         return false;
+       }
+       bool res = issueCash(*account, amount);
+       if (res)
+         std::cout << "issued " << amount << " UAH." << std::endl;
+
+       return res;
+     }
+       //{ return m_accsDBase.find(*account) == m_accsDBase.end() || m_accsDBase[*account] < amount ? false : issueCash(*account, amount); }
 
      bool issueCash(int account, int amount); /* handles cash issues */
 

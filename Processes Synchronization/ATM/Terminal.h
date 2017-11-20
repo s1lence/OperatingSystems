@@ -16,6 +16,8 @@
  
  #ifndef _TERMINAL_H_
  #define _TERMINAL_H_
+
+#include<iostream>
  
  namespace terminal{
  
@@ -61,7 +63,7 @@
 
       /* Account represents account type that m_atm can work with */
      template<class Account>
-     bool withdrawCash(int amount, Account const && account) const;
+     bool withdrawCash(int amount, Account const && account, int round) const;
 
       /* returns true if terminal tries to process the request */
      bool attempted() const{ return 0 != m_attempt; }
@@ -73,7 +75,7 @@
    
    template<class AbstractATM>
    template<class Account>
-   bool terminal::Terminal<AbstractATM>::withdrawCash(int amount, Account const && account) const{
+   bool terminal::Terminal<AbstractATM>::withdrawCash(int amount, Account const && account, int round) const{
      
      m_attempt = 1;
 
@@ -87,6 +89,9 @@
          m_attempt = 1;
        }
      }
+
+     /* console report */
+     std::cout << '[' << round << ']' << "Terminal " << m_queueState << "uses atm: ";
 
       /* critical section */
      bool result = const_cast<AbstractATM*>(m_atm)->proceedRequest(&account, amount);

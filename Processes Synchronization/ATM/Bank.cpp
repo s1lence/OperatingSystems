@@ -41,7 +41,7 @@ void bank::Bank::fillCashDatabase(_dstrb *distribution, _rndgn *generator, int r
   while(rounds--){
 
     for (auto i : cash)
-      m_atm.receiveCash(i, (*distribution)(*generator));
+      m_atm.receiveCash(i, (*distribution)(*generator) / i);
   }
 }
 
@@ -52,6 +52,6 @@ void bank::Bank::start(int min, int max, int rounds)
 
   generator.seed(std::random_device()());
 
-  auto firstTermRes = std::async(std::launch::async, [&](){while (rounds--) m_trm_1.withdrawCash(distribution(generator), distribution(generator)); });
-  auto secondTermRes = std::async(std::launch::async, [&](){while (rounds--) m_trm_2.withdrawCash(distribution(generator), distribution(generator)); });
+  std::async(std::launch::async, [&, rounds]()mutable{while (rounds--) m_trm_1.withdrawCash(distribution(generator), distribution(generator), rounds + 1); });
+  std::async(std::launch::async, [&, rounds]()mutable{while (rounds--) m_trm_2.withdrawCash(distribution(generator), distribution(generator), rounds + 1); });
 }

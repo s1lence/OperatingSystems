@@ -35,6 +35,7 @@ bool atm::ATM::issueCash(int account, int amount)
     return true; /* succeeded */
   }
 
+  std::cout << "transaction denied: not enough bills" << std::endl;
   return false; /* fails */
 }
 

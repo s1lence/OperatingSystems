@@ -16,7 +16,16 @@
  
 #include "Bank.h"
 
+#include<string>
+
 int main(){
+
+  bank::Bank b;
+  b.init(0, 100);
+  b.start(0, 100, 100);
+
+  std::string buf;
+  getline(std::cin, buf);
 
   return 0;
 }
