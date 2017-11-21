@@ -22,7 +22,7 @@
 #define BILLS_AVAILABILITY_COEFFICIENT 7
 #define GREEDINESS_COEFFICIENT 6
 
-#ifndef _DEBUG
+#ifdef _DEBUG
 #define DEBUG
 
 #define BILLS_REPORT

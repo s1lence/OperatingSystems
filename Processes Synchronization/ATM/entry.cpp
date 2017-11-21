@@ -31,7 +31,6 @@ int main(){
 
   bank::Bank b;
   b.fillAccountsDatabaseInRange(12, 75, 100);
-  b.fillCashDatabaseInRange(3, 35, 5);
   b.fillCashDatabaseInRange(35, 200, 25);
 
 #ifdef DEBUG
@@ -40,7 +39,7 @@ int main(){
   
 #endif /* DEBUG */
 
-  b.start(1, 20, 60);
+  b.start(1, 20, 40);
 
   std::getchar();
 

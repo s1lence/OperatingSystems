@@ -76,8 +76,6 @@ void bank::Bank::start(int min, int max, int rounds)
   _rndgn   generator;
   _dstrb   distribution(min, max);
 
-  generator.seed(std::random_device()());
-
-  auto r1 = std::async(std::launch::async, [&]()mutable{while (rounds--) m_trm_1.withdrawCash(distribution(generator)*GREEDINESS_COEFFICIENT, distribution(generator), rounds + 1); });
-  auto r2 = std::async(std::launch::async, [=]()mutable{while (rounds--) m_trm_2.withdrawCash(distribution(generator)*GREEDINESS_COEFFICIENT, distribution(generator), rounds + 1); });
+  auto r1 = std::async(std::launch::async, [=]()mutable{generator.seed(std::random_device()()); while (rounds--) m_trm_1.withdrawCash(distribution(generator)*GREEDINESS_COEFFICIENT, distribution(generator), rounds + 1); });
+  auto r2 = std::async(std::launch::async, [=]()mutable{generator.seed(std::random_device()()); while (rounds--) m_trm_2.withdrawCash(distribution(generator)*GREEDINESS_COEFFICIENT, distribution(generator), rounds + 1); });
 }
