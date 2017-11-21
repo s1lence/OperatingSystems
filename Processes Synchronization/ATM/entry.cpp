@@ -17,23 +17,32 @@
 
 #include "Bank.h"
 
-#include<conio.h>
+#ifdef DEBUG
+
+
 #include<iostream>
 #include<string>
 
+#endif /* DEBUG */
+
+#include<conio.h>
 
 int main(){
 
   bank::Bank b;
   b.fillAccountsDatabaseInRange(12, 75, 100);
-  b.fillCashDatabaseInRange(1, 35, 10);
+  b.fillCashDatabaseInRange(3, 35, 5);
   b.fillCashDatabaseInRange(35, 200, 25);
 
-  std::cout << std::endl << "Bank opened. Transactions history:" << std::endl;
-  b.start(1, 20, 45);
+#ifdef DEBUG
+
+  std::cout << std::endl << "Press any key to exit.\nBank opened. Transactions history:" << std::endl;
+  
+#endif /* DEBUG */
+
+  b.start(1, 20, 60);
 
   std::getchar();
- 
 
   return 0;
 }

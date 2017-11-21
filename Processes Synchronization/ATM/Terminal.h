@@ -17,7 +17,7 @@
  #ifndef _TERMINAL_H_
  #define _TERMINAL_H_
 
-#ifdef _DEBUG
+#ifdef DEBUG
 
 #include<iomanip>
 #include<iostream>
@@ -27,7 +27,7 @@
 #endif // BILLS_REPORT
 
 
-#endif // _DEBUG
+#endif // DEBUG
 
  
  namespace terminal{
@@ -101,7 +101,7 @@
        }
      }
 
-#ifdef _DEBUG
+#ifdef DEBUG
      /* console report */    
      std::cout << std::endl;
      for (int i = 0; i < 130; ++i)
@@ -118,12 +118,12 @@
      std::cout << std::endl << std::endl;
      std::cout << '[' << std::setw(3) << round << std::setw(2) << ']' << " Terminal #" << m_queueState << " uses atm: ";
 
-#endif // _DEBUG
+#endif // DEBUG
 
       /* critical section */
      bool result = const_cast<AbstractATM*>(m_atm)->proceedRequest(&account, amount);
 
-#ifdef _DEBUG
+#ifdef DEBUG
 
 #ifdef BILLS_REPORT
 
@@ -139,7 +139,7 @@
      for (int i = 0; i < 130; ++i)
        std::cout << '_';
      std::cout << std::endl;
-#endif // _DEBUG
+#endif // DEBUG
 
       /* release the resource */
      m_attempt = 0;

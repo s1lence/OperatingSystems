@@ -26,7 +26,7 @@ atm::ATM& atm::ATM::operator=(const ATM &atm)
   return *this;
 }
 
-#ifdef _DEBUG
+#ifdef DEBUG
 
 bool atm::ATM::proceedRequest(int const * account, int amount)
 {
@@ -48,7 +48,7 @@ bool atm::ATM::proceedRequest(int const * account, int amount)
   return res;
 }
 
-#endif // _DEBUG
+#endif // DEBUG
 
 bool atm::ATM::issueCash(int account, int amount)
 {  
@@ -58,9 +58,9 @@ bool atm::ATM::issueCash(int account, int amount)
     m_accsDBase[account] -= amount;
     return true; /* succeeded */
   }
-#ifdef _DEBUG
+#ifdef DEBUG
   std::cout << "; transaction denied: not enough bills" << std::endl;
-#endif // _DEBUG
+#endif // DEBUG
 
   return false; /* fails */
 }
@@ -76,7 +76,7 @@ bool atm::ATM::getCash(int sum)
   
   if (sum) return false; /* not enough cash */
 
-#ifdef _DEBUG
+#ifdef DEBUG
 #ifdef MONEY_REPORT
 
   std::cout << "\n\nMoney issued:" << std::endl;
@@ -87,7 +87,7 @@ bool atm::ATM::getCash(int sum)
   std::cout << std::endl;
 
 #endif // MONEY_REPORT
-#endif // _DEBUG
+#endif // DEBUG
   
 
   for (auto &it : cash)

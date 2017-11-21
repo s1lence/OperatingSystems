@@ -82,11 +82,11 @@
 
      void start(int min, int max, int rounds);
 
-#ifdef _DEBUG
+#ifdef DEBUG
 
      void cashAvailablilityReport() const{ m_atm.reportCashDBase(std::cout); std::cout << std::endl; }
 
-#endif // _DEBUG
+#endif // DEBUG
 
    };
  

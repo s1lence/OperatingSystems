@@ -92,7 +92,7 @@
      void receiveCash(int bill, int amount){ m_cashDBase[bill] += amount; }
 
       /* cash management */
-#ifdef _DEBUG
+#ifdef DEBUG
 
      bool proceedRequest(int const * account, int amount);
 
@@ -100,7 +100,7 @@
 #else
 
      bool proceedRequest(int const * account, int amount){ return m_accsDBase.find(*account) == m_accsDBase.end() || m_accsDBase[*account] < amount ? false : issueCash(*account, amount); }
-#endif // _DEBUG
+#endif // DEBUG
 
      bool issueCash(int account, int amount); /* handles cash issues */
 
