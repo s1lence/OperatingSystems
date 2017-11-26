@@ -21,7 +21,6 @@
  #define _CACHE_H_
 
 #include<array>
-#include<functional>
 
  namespace cache{
 
@@ -54,7 +53,6 @@
      dword m_free     : 1;
      dword m_modified : 1;
 
-     const static dword _Aux_Value_ = ~(~0 >> _Length);
      const static byte  _Address_Offset_;
 
    public:
@@ -62,7 +60,7 @@
      ~TagLine() = default;
 
      dword operator=(const dword address){ m_modified = 0, m_tag = address >> _Address_Offset_; }
-     bool operator==(const dword& address)const{ return _Aux_Value_ & address & m_tag; }
+     bool operator==(const dword address) const{ return address >> _Address_Offset_ == m_tag; }
 
      void modify(){ m_modified = 1; }     
    };
@@ -87,10 +85,36 @@
    public:
      Container(const _Ty *data, const _Ty_Aux *tag) :m_data(data), m_tag(tag){}
      Container(const Container&& obj) :m_data(obj.m_data), m_tag(obj.m_tag){}
-     ~Container() = default;
 
      operator _Ty() const{ return *m_data; }
      _Ty operator=(_Ty&& data){ m_tag->modify(), *m_data = data; }
+   };
+
+   /*
+    *	pseudo-LRU algorithm for four-way set
+    *	it's simply changes states
+    */
+   template<class _Ty>
+   struct Caller{
+
+     _Ty operator()(_Ty& state){
+       switch (state){
+
+       case 0: /* line 0 */
+         return state = 6, 0; /* 110 */
+
+       case 6: /* line 2 */
+         return state = 3, 2; /* 011 */
+
+       case 3: /* line 1 */
+         return state = 5, 1; /* 101 */
+
+       case 5: /* line 3 */
+         return state = 0, 3; /* 000 */
+
+       }
+     }
+
    };
 
    /*
@@ -106,7 +130,7 @@
     *	_Algorithm is the algorithm for replacing existing items
     *	_Amount is the amount of bit fields
     *	_Size is width of data line
-    *	_WayNumber defines amount of directories in each set(three-way cache - three directories in each set)
+    *	_WayNumber defines amount of directories in each set(four-way cache - four directories in each set)
     *	_TagLength is the length of tag line(how many bits of the address is the tag)
     *	
     *	address consist of(sizes are valid only for this cache model):
@@ -116,28 +140,30 @@
     *	
     *	note: three bits enough for pseudo-LRU in four-way cache set 
     */
-   template<class _Ty, std::function<void(_Ty,dword)> _Algorithm, byte _Amount = 3, byte _Size = 4, byte _WayNumber = 4, byte _TagLength = 21>
+   template<class _Ty, class _Algorithm, byte _Amount = 3, byte _Size = 4, byte _WayNumber = 4, byte _TagLength = 21>
    class Set{
      std::array<TagLine<_TagLength>, _WayNumber>    m_tags;
      std::array<DataLine<_Size>, _WayNumber>        m_data;
      _Ty                                            m_accesses : _Amount;
      
    public:
+     Set(_Ty state = 0) :m_accesses(state){}
      
-     /*
-      *	set must handle all LRU-able bullshit: more methods required.
-      */
+     template<class Memory>
+     void copyData(_Ty address);
 
-     Container<dword, dword>&& operator[](dword address);
-     
-     dword operator=(dword&& m_data){}
-     
+     Container<_Ty, _Ty>&& fetch(_Ty address){}
+
+     Container<_Ty, _Ty>&& operator[](_Ty address);
    };
 
-   template<class _Ty, std::function<void(_Ty, dword)> _Algorithm, byte _Amount /*= 3*/, byte _Size /*= 4*/, byte _WayNumber /*= 4*/, byte _TagLength /*= 21*/>
-   Container<dword, dword>&& cache::Set<_Ty, _Algorithm, _Amount, _Size, _WayNumber, _TagLength>::operator[](dword address)
+   template<class _Ty, class _Algorithm, byte _Amount /*= 3*/, byte _Size /*= 4*/, byte _WayNumber /*= 4*/, byte _TagLength /*= 21*/>
+   Container<_Ty, _Ty>&& cache::Set<_Ty, _Algorithm, _Amount, _Size, _WayNumber, _TagLength>::operator[](_Ty address)
    {
+     for (byte i = 0; i < m_tags.size(); ++i) 
+       if (m_tags[i] == address) return std::forward<Container<_Ty, _Ty>&&>(Container(&m_data[i], &m_tags[i]));
 
+     return fetch(address);
    }
 
    /*
@@ -147,15 +173,15 @@
     *	- the address allows to decide which set should be swept;
     *	- if the set has no free tag one should be overwritten.
     */
-   template<class T>
+   template<class _Ty = dword>
    class Cache{
-     std::array<Set<>, 128>   m_cache;
+     std::array<Set<_Ty, Caller<_Ty>>, 128>   m_cache;
 
    public:
 
-     dword lookup(dword address);
+     _Ty lookup(_Ty address);
 
-     void fetch(dword address);
+     void fetch(_Ty address);
      
 
    };
