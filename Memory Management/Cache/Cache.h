@@ -37,12 +37,11 @@
     *	holds actual data from memory
     */
    template<byte _Length>
-   class dataLine{ 
-     std::array<dword, _Length>   data;
+   class DataLine{ 
+     std::array<dword, _Length>   m_data;
 
    public:
-     dword& operator[](byte offset){ return data[offset]; }
-
+     dword& operator[](byte offset){ return m_data[offset]; }
    };
 
    /*
@@ -50,33 +49,49 @@
     *	holds part of the address and flags for data related to it's tag
     */
    template<byte _Length>
-   class tagLine{
-     dword tag      : _Length;
-     dword free     : 1;
-     dword modified : 1;
+   class TagLine{
+     dword m_tag      : _Length;
+     dword m_free     : 1;
+     dword m_modified : 1;
 
      const static dword _Aux_Value_ = ~(~0 >> _Length);
      const static byte  _Address_Offset_;
 
    public:
-     tagLine();
-     ~tagLine() = default;
+     TagLine();
+     ~TagLine() = default;
 
-     dword operator=(const dword address){ modified = 0, tag = address >> _Address_Offset_; }
-     bool operator==(const dword& address)const{ return _Aux_Value_ & address & tag; }
+     dword operator=(const dword address){ m_modified = 0, m_tag = address >> _Address_Offset_; }
+     bool operator==(const dword& address)const{ return _Aux_Value_ & address & m_tag; }
 
-     void modify(){ modified = 1; }
-     
+     void modify(){ m_modified = 1; }     
    };
 
    template<byte _Length>
-   cache::tagLine<_Length>::tagLine() :tag(0), free(0), modified(0)
+   cache::TagLine<_Length>::TagLine() :m_tag(0), m_free(0), m_modified(0)
    {
      byte tmp = ~0 >> _Length, count = 1;
 
      while (tmp = tmp >> 1) ++count;
      _Address_Offset_ = count;
    }
+
+   /*
+    *	auxiliary class for correct modification lines and saving results into memory 
+    */
+   template<class _Ty, class _Ty_Aux>
+   class Container{
+     _Ty      * m_data;
+     _Ty_Aux  * m_tag;
+
+   public:
+     Container(const _Ty *data, const _Ty_Aux *tag) :m_data(data), m_tag(tag){}
+     Container(const Container&& obj) :m_data(obj.m_data), m_tag(obj.m_tag){}
+     ~Container() = default;
+
+     operator _Ty() const{ return *m_data; }
+     _Ty operator=(_Ty&& data){ m_tag->modify(), *m_data = data; }
+   };
 
    /*
     *	set is the model of cache line
@@ -102,10 +117,10 @@
     *	note: three bits enough for pseudo-LRU in four-way cache set 
     */
    template<class _Ty, std::function<void(_Ty,dword)> _Algorithm, byte _Amount = 3, byte _Size = 4, byte _WayNumber = 4, byte _TagLength = 21>
-   class set{
-     std::array<tagLine<_TagLength>, _WayNumber>    tags;
-     std::array<dataLine<_Size>, _WayNumber>        data;
-     _Ty                                            accesses : _Amount;
+   class Set{
+     std::array<TagLine<_TagLength>, _WayNumber>    m_tags;
+     std::array<DataLine<_Size>, _WayNumber>        m_data;
+     _Ty                                            m_accesses : _Amount;
      
    public:
      
@@ -113,11 +128,17 @@
       *	set must handle all LRU-able bullshit: more methods required.
       */
 
-     dword operator[](byte offset){}
+     Container<dword, dword>&& operator[](dword address);
      
-     dword operator=(dword&& data){}
+     dword operator=(dword&& m_data){}
      
    };
+
+   template<class _Ty, std::function<void(_Ty, dword)> _Algorithm, byte _Amount /*= 3*/, byte _Size /*= 4*/, byte _WayNumber /*= 4*/, byte _TagLength /*= 21*/>
+   Container<dword, dword>&& cache::Set<_Ty, _Algorithm, _Amount, _Size, _WayNumber, _TagLength>::operator[](dword address)
+   {
+
+   }
 
    /*
     *	cache is the model of physical cpu cache
@@ -128,7 +149,7 @@
     */
    template<class T>
    class Cache{
-     std::array<set<>, 128>   m_cache;
+     std::array<Set<>, 128>   m_cache;
 
    public:
 
