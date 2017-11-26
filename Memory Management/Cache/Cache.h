@@ -109,6 +109,10 @@
      
    public:
      
+     /*
+      *	set must handle all LRU-able bullshit: more methods required.
+      */
+
      dword operator[](byte offset){}
      
      dword operator=(dword&& data){}
