@@ -32,6 +32,17 @@
    using dword = unsigned long;
    
    /*
+    *	represents all available memory space
+    */
+   template<class _Ty, byte _Size>
+   class RAM{
+     std::array<_Ty, _Size>   m_data;
+
+   public:
+     dword
+   };
+
+   /*
     *	the data sequence:
     *	holds actual data from memory
     */
@@ -62,7 +73,8 @@
      dword operator=(const dword address){ m_modified = 0, m_tag = address >> _Address_Offset_; }
      bool operator==(const dword address) const{ return address >> _Address_Offset_ == m_tag; }
 
-     void modify(){ m_modified = 1; }     
+     void modify(){ m_modified = 1; }
+     bool free()const{ return m_free; }
    };
 
    template<byte _Length>
@@ -70,8 +82,7 @@
    {
      byte tmp = ~0 >> _Length, count = 1;
 
-     while (tmp = tmp >> 1) ++count;
-     _Address_Offset_ = count;
+     _Address_Offset_ = (while (tmp = tmp >> 1) ++count, count);
    }
 
    /*
@@ -138,30 +149,30 @@
     *	 - set:    bits from tenth to fourth including  ; log2(N), for N-way cache
     *	 - tag:    the highest twenty one bits          ; rest of the address
     *	
-    *	note: three bits enough for pseudo-LRU in four-way cache set 
+    *	note: three bits enough for pseudo-LRU in four-way cache set;
+    *	      _RAM object requires to have 
     */
-   template<class _Ty, class _Algorithm, byte _Amount = 3, byte _Size = 4, byte _WayNumber = 4, byte _TagLength = 21>
+   template<class _Ty, class _Algorithm, class _Memory, byte _Amount, byte _Size, byte _WayNumber, byte _TagLength>
    class Set{
      std::array<TagLine<_TagLength>, _WayNumber>    m_tags;
      std::array<DataLine<_Size>, _WayNumber>        m_data;
      _Ty                                            m_accesses : _Amount;
-     
+
+     static _Memory m_ram;
+
    public:
      Set(_Ty state = 0) :m_accesses(state){}
-     
-     template<class Memory>
-     void copyData(_Ty address);
 
-     Container<_Ty, _Ty>&& fetch(_Ty address){}
+     Container<_Ty, _Ty>&& fetch(_Ty address){ _Algorithm<_Ty> alg; }
 
      Container<_Ty, _Ty>&& operator[](_Ty address);
    };
 
-   template<class _Ty, class _Algorithm, byte _Amount /*= 3*/, byte _Size /*= 4*/, byte _WayNumber /*= 4*/, byte _TagLength /*= 21*/>
+   template<class _Ty, class _Algorithm, byte _Amount, byte _Size, byte _WayNumber, byte _TagLength>
    Container<_Ty, _Ty>&& cache::Set<_Ty, _Algorithm, _Amount, _Size, _WayNumber, _TagLength>::operator[](_Ty address)
    {
      for (byte i = 0; i < m_tags.size(); ++i) 
-       if (m_tags[i] == address) return std::forward<Container<_Ty, _Ty>&&>(Container(&m_data[i], &m_tags[i]));
+       if (!m_tags[i].free() && m_tags[i] == address) return std::forward<Container<_Ty, _Ty>&&>(Container(&m_data[i], &m_tags[i]));
 
      return fetch(address);
    }
@@ -173,16 +184,13 @@
     *	- the address allows to decide which set should be swept;
     *	- if the set has no free tag one should be overwritten.
     */
-   template<class _Ty = dword>
+   template<class _Ty = dword, size_t _Size = 128, byte _BitsAmountInSetAlgorithm = 3, byte _SizeOfDataLine = 4, byte _SetWayNumber = 4, byte _SetTagLength = 21>
    class Cache{
-     std::array<Set<_Ty, Caller<_Ty>>, 128>   m_cache;
+     std::array<Set<_Ty, Caller<_Ty>, RAM<_Ty, _Size*sizeof(_Ty)*_SizeOfDataLine*_SetWayNumber>, _BitsAmountInSetAlgorithm, _SizeOfDataLine, _SetWayNumber, _SetTagLength>, _Size>    m_cache;
 
    public:
 
      _Ty lookup(_Ty address);
-
-     void fetch(_Ty address);
-     
 
    };
 
