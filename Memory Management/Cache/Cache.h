@@ -21,8 +21,9 @@
  #define _CACHE_H_
 
 #include<array>
+#include<iostream>
 
- namespace cache{
+ namespace win32{
 
    /*
     *	definitions for 32-bit system
@@ -34,13 +35,14 @@
    /*
     *	represents all available memory space
     */
-   template<class _Ty, class _DataLine, byte _Size>
+   template<class _Ty, class _DataLine, dword _Size>
    class RAM{
      std::array<_Ty, _Size>   m_data;
 
    public:
      _Ty& operator[](_Ty offset){ return m_data[offset]; }
-     void writeBack(_DataLine & line, _Ty address){ memcpy_s(m_data[address], line.size(), line[0], line.size()); }
+     void writeBack(_DataLine & line, _Ty address){ memcpy_s(m_data[address / sizeof(_Ty)], line.size(), line[0], line.size()); }
+     void insert(_Ty* sequence, dword length){ memcpy_s(m_data[0], m_data.size(), sequence, length); }
    };
 
    /*
@@ -73,8 +75,10 @@
      TagLine();
      ~TagLine() = default;
 
-     _Ty operator=(const _Ty address){ m_modified = 0, m_tag = address >> _Address_Offset_; }
+     _Ty operator=(const _Ty address){ m_modified = 0, m_free = 0, m_tag = address >> _Address_Offset_; }
      bool operator==(const _Ty address) const{ return address >> _Address_Offset_ == m_tag; }
+
+     operator _Ty() const{ return m_tag; }
 
      void modify(){ m_modified = 1; }
      bool modified()const{ return m_modified; }
@@ -82,7 +86,7 @@
    };
 
    template<class _Ty, byte _Length>
-   cache::TagLine<_Ty, _Length>::TagLine() :m_tag(0), m_free(0), m_modified(0)
+   win32::TagLine<_Ty, _Length>::TagLine() :m_tag(0), m_free(1), m_modified(0)
    {
      byte tmp = ~0 >> _Length, count = 1;
 
@@ -150,7 +154,7 @@
     *	
     *	address consist of(sizes are valid only for this cache model):
     *	 - offset: the lowest four bits                 ; log2(L), where L is length of data line in bytes
-    *	 - set:    bits from tenth to fourth including  ; log2(N), for N-way cache
+    *	 - set:    bits from tenth to fourth including  ; log2(N), for N - amount of sets
     *	 - tag:    the highest twenty one bits          ; rest of the address
     *	
     *	note: three bits enough for pseudo-LRU in four-way cache set;
@@ -177,7 +181,7 @@
    };
 
    template<class _Ty, class _Algorithm, class _Memory, byte _Amount, byte _Size, byte _WayNumber, byte _TagLength>
-   cache::Container<_Ty, _Ty>&& cache::Set<_Ty, _Algorithm, _Memory, _Amount, _Size, _WayNumber, _TagLength>::fetch(_Ty address)
+   win32::Container<_Ty, _Ty>&& win32::Set<_Ty, _Algorithm, _Memory, _Amount, _Size, _WayNumber, _TagLength>::fetch(_Ty address)
    {
      _Algorithm<_Ty> alg;
      byte index = alg(m_accesses);
@@ -192,7 +196,7 @@
    }
 
    template<class _Ty, class _Algorithm, byte _Amount, byte _Size, byte _WayNumber, byte _TagLength>
-   Container<_Ty, _Ty>&& cache::Set<_Ty, _Algorithm, _Amount, _Size, _WayNumber, _TagLength>::operator[](_Ty address)
+   win32::Container<_Ty, _Ty>&& win32::Set<_Ty, _Algorithm, _Amount, _Size, _WayNumber, _TagLength>::operator[](_Ty address)
    {
      for (byte i = 0; i < m_tags.size(); ++i) 
        if (!m_tags[i].free() && m_tags[i] == address) 
@@ -211,18 +215,55 @@
    template<class _Ty = dword, size_t _Size = 128, byte _BitsAmountInSetAlgorithm = 3, byte _SizeOfDataLine = 4, byte _SetWayNumber = 4, byte _SetTagLength = 21>
    class Cache{
 
-     using _ram_t   = RAM<_Ty, DataLine<_SizeOfDataLine>, _Size*_SizeOfDataLine*_SetWayNumber>;
-     using _cache_t = Set<_Ty, Caller<_Ty>, _ram_t, _BitsAmountInSetAlgorithm, _SizeOfDataLine, _SetWayNumber, _SetTagLength>;
+     using _ram_t   = RAM<_Ty, DataLine<_Ty, _SizeOfDataLine>, _Size*_SizeOfDataLine*_SetWayNumber>;
+     using _line_t  = Set<_Ty, Caller<_Ty>, _ram_t, _BitsAmountInSetAlgorithm, _SizeOfDataLine, _SetWayNumber, _SetTagLength>;
 
-     std::array<_cache_t, _Size>    m_cache;
-     _ram_t                         m_memory;
+     std::array<_line_t, _Size>    m_cache;
+     _ram_t                        m_memory;
    public:
 
      Cache(){ m_cache.setMemoryAddress(&m_memory); }
 
-     _Ty lookup(_Ty address);
+     void initMemory(_Ty *sequence, dword length){ m_memory.insert(sequence, length); }
 
+     win32::Container<_Ty, _Ty>&& lookup(_Ty address);
+
+     void stepByStepDebugTest();
+
+     void pause()const;
    };
+
+   template<class _Ty /*= dword*/, size_t _Size /*= 128*/, byte _BitsAmountInSetAlgorithm /*= 3*/, byte _SizeOfDataLine /*= 4*/, byte _SetWayNumber /*= 4*/, byte _SetTagLength /*= 21*/>
+   win32::Container<_Ty, _Ty>&& win32::Cache<_Ty, _Size, _BitsAmountInSetAlgorithm, _SizeOfDataLine, _SetWayNumber, _SetTagLength>::lookup(_Ty address)
+   {
+     _Ty res = ~0, tmp = ~0;
+     static _Ty _SetAuxConst = (while (res > (_Size << 1)) res >> 1, while (tmp > (sizeof(_Ty)*_SizeOfDataLine << 1)) tmp >> 1, res^tmp);
+     
+     return m_cache[address & _SetAuxConst][address];
+   }
+
+   template<class _Ty /*= dword*/, size_t _Size /*= 128*/, byte _BitsAmountInSetAlgorithm /*= 3*/, byte _SizeOfDataLine /*= 4*/, byte _SetWayNumber /*= 4*/, byte _SetTagLength /*= 21*/>
+   void win32::Cache<_Ty, _Size, _BitsAmountInSetAlgorithm, _SizeOfDataLine, _SetWayNumber, _SetTagLength>::stepByStepDebugTest()
+   {
+     _Ty arr[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+     initMemory(arr, 10);
+
+     for (int i = 0; i < 10; ++i){
+
+       pause();
+       auto res = lookup(i*sizeof(_Ty));
+       pause();
+       res = i * 2;
+       pause();
+     }
+
+   }
+
+   template<class _Ty /*= dword*/, size_t _Size /*= 128*/, byte _BitsAmountInSetAlgorithm /*= 3*/, byte _SizeOfDataLine /*= 4*/, byte _SetWayNumber /*= 4*/, byte _SetTagLength /*= 21*/>
+   void win32::Cache<_Ty, _Size, _BitsAmountInSetAlgorithm, _SizeOfDataLine, _SetWayNumber, _SetTagLength>::pause() const
+   {
+
+   }
 
  }
  
