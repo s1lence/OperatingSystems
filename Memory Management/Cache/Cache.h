@@ -30,21 +30,17 @@
    using byte  = unsigned char;
    using word  = unsigned short;
    using dword = unsigned long;
-   
-    /* declaration for memory class */
-   template<class _Ty, byte _Length = 4>
-   class DataLine;
 
    /*
     *	represents all available memory space
     */
-   template<class _Ty, byte _Size>
+   template<class _Ty, class _DataLine, byte _Size>
    class RAM{
      std::array<_Ty, _Size>   m_data;
 
    public:
      _Ty& operator[](_Ty offset){ return m_data[offset]; }
-     void writeBack(DataLine<_Ty> & line, _Ty address){ memcpy_s(m_data[address], line.size(), line[0], line.size()); }
+     void writeBack(_DataLine & line, _Ty address){ memcpy_s(m_data[address], line.size(), line[0], line.size()); }
    };
 
    /*
@@ -170,11 +166,12 @@
      static _Ty _AddressAuxiliaryConst_;
 
    public:
-     void SetMemoryAddress(_Memory * p2ram){ m_p2ram = p2ram; }
 
      Set(_Ty state = 0) :m_accesses(state), _AddressAuxiliaryConst_(~0 >> _TagLength){}
 
      Container<_Ty, _Ty>&& fetch(_Ty address);
+
+     void setMemoryAddress(_Memory * p2ram){ m_p2ram = p2ram; }
 
      Container<_Ty, _Ty>&& operator[](_Ty address);
    };
@@ -191,7 +188,7 @@
      m_tags[index] = address;
      m_data[index] = *m_p2ram[address];
 
-     return std::forward<Container<_Ty, _Ty>&&>(Container(&m_data[i], &m_tags[i]));
+     return std::forward<Container<_Ty, _Ty>&&>(Container(&m_data[index], &m_tags[index]));
    }
 
    template<class _Ty, class _Algorithm, byte _Amount, byte _Size, byte _WayNumber, byte _TagLength>
@@ -213,11 +210,15 @@
     */
    template<class _Ty = dword, size_t _Size = 128, byte _BitsAmountInSetAlgorithm = 3, byte _SizeOfDataLine = 4, byte _SetWayNumber = 4, byte _SetTagLength = 21>
    class Cache{
-     std::array<Set<_Ty, Caller<_Ty>, RAM<_Ty, _Size*_SizeOfDataLine*_SetWayNumber>, _BitsAmountInSetAlgorithm, _SizeOfDataLine, _SetWayNumber, _SetTagLength>, _Size>    m_cache;
-     RAM<_Ty, _Size*_SizeOfDataLine*_SetWayNumber>  m_memory;
+
+     using _ram_t   = RAM<_Ty, DataLine<_SizeOfDataLine>, _Size*_SizeOfDataLine*_SetWayNumber>;
+     using _cache_t = Set<_Ty, Caller<_Ty>, _ram_t, _BitsAmountInSetAlgorithm, _SizeOfDataLine, _SetWayNumber, _SetTagLength>;
+
+     std::array<_cache_t, _Size>    m_cache;
+     _ram_t                         m_memory;
    public:
 
-     Cache(){ m_cache.SetMemoryAddress(&m_memory); }
+     Cache(){ m_cache.setMemoryAddress(&m_memory); }
 
      _Ty lookup(_Ty address);
 
