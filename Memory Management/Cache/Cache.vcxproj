@@ -66,6 +66,9 @@
   <ItemGroup>
     <ClInclude Include="Cache.h" />
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="testdrive.cpp" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
