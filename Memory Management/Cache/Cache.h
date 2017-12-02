@@ -46,7 +46,7 @@
    public:
      _Ty& operator[](_Ty offset){ return m_data[offset]; }
      void writeBack(_DataLine & line, _Ty address){ memcpy_s(m_data[address / sizeof(_Ty)], line.size(), line[0], line.size()); }
-     void insert(_Ty* sequence, dword length){ memcpy_s(m_data[0], m_data.size(), sequence, length); }
+     void insert(_Ty* sequence, dword length){ memcpy_s((void*)m_data[0], m_data.size(), sequence, length); }
 
      void pprint(_Ty amount) const{ for (int i = 0; i < amount; ++i) std::cout << m_data[i] << " "; }
    };
@@ -60,7 +60,7 @@
      std::array<_Ty, _Length>   m_data;
 
    public:
-     _Ty& operator=(_Ty& address){ memcpy_s(m_data[0], m_data.size(), address, m_data.size()); }
+     _Ty& operator=(_Ty& address){ memcpy_s((void*)m_data[0], m_data.size(), (void*)address, m_data.size()); }
      _Ty& operator[](byte offset){ return m_data[offset]; }
      _Ty size()const{ return m_data.size(); }
 
@@ -77,10 +77,12 @@
      _Ty m_free     : 1;
      _Ty m_modified : 1;
 
-     const static byte  _Address_Offset_;
+     const byte  _Address_Offset_;
+
+     byte initOffsetVar();
 
    public:
-     TagLine();
+     TagLine() :m_tag(0), m_free(1), m_modified(0), _Address_Offset_(initOffsetVar()){}
      ~TagLine() = default;
 
      _Ty operator=(const _Ty address){ m_modified = 0, m_free = 0, m_tag = address >> _Address_Offset_; }
@@ -95,27 +97,29 @@
    };
 
    template<class _Ty, byte _Length>
-   win32::TagLine<_Ty, _Length>::TagLine() :m_tag(0), m_free(1), m_modified(0)
+   byte win32::TagLine<_Ty, _Length>::initOffsetVar()
    {
      byte tmp = ~0 >> _Length, count = 1;
 
-     _Address_Offset_ = (while (tmp = tmp >> 1) ++count, count);
+     while (tmp = tmp >> 1) ++count;
+     return count;
    }
 
    /*
     *	auxiliary class for correct modification lines and saving results into memory 
     */
-   template<class _Ty, class _Ty_Aux>
+   template<class _Ty, class _TyData, class _TyTag>
    class Container{
-     _Ty      * m_data;
-     _Ty_Aux  * m_tag;
+     _TyData  * m_data;
+     _TyTag   * m_tag;
 
    public:
-     Container(const _Ty *data, const _Ty_Aux *tag) :m_data(data), m_tag(tag){}
+     Container(const _TyData *data, const _TyTag *tag) :m_data(data), m_tag(tag){}
      Container(const Container&& obj) :m_data(obj.m_data), m_tag(obj.m_tag){}
 
      operator _Ty() const{ return *m_data; }
      _Ty operator=(_Ty&& data){ m_tag->modify(), *m_data = data; }
+     Container&& operator=(Container&& obj){ m_data = obj.m_data, m_tag = obj.m_tag, return std::forward(obj); }
    };
 
    /*
@@ -171,28 +175,32 @@
     */
    template<class _Ty, class _Algorithm, class _Memory, byte _Amount, byte _Size, byte _WayNumber, byte _TagLength>
    class Set{
-     std::array<TagLine<_TagLength>, _WayNumber>    m_tags;
-     std::array<DataLine<_Size>, _WayNumber>        m_data;
-     _Ty                                            m_accesses : _Amount;
+
+     using _tag_t  = TagLine<_Ty, _TagLength>;
+     using _data_t = DataLine<_Ty, _Size>;
+
+     std::array<_tag_t, _WayNumber>    m_tags;
+     std::array<_data_t, _WayNumber>   m_data;
+     _Ty                               m_accesses : _Amount;
 
      static _Memory * m_p2ram;
-     static _Ty _AddressAuxiliaryConst_;
+     static const _Ty _AddressAuxiliaryConst_ = ~0 >> _TagLength;
 
    public:
 
-     Set(_Ty state = 0) :m_accesses(state), _AddressAuxiliaryConst_(~0 >> _TagLength){}
+     Set(_Ty state = 0) :m_accesses(state){}
 
-     Container<_Ty, _Ty>&& fetch(_Ty address);
+     Container<_Ty, _data_t, _tag_t>&& fetch(_Ty address);
 
      void setMemoryAddress(_Memory * p2ram){ m_p2ram = p2ram; }
 
-     Container<_Ty, _Ty>&& operator[](_Ty address);
+     Container<_Ty, _data_t, _tag_t>&& operator[](_Ty address);
 
      void pprint() const;
    };
 
    template<class _Ty, class _Algorithm, class _Memory, byte _Amount, byte _Size, byte _WayNumber, byte _TagLength>
-   win32::Container<_Ty, _Ty>&& win32::Set<_Ty, _Algorithm, _Memory, _Amount, _Size, _WayNumber, _TagLength>::fetch(_Ty address)
+   win32::Container<_Ty, DataLine<_Ty, _Size>, TagLine<_Ty, _TagLength>>&& win32::Set<_Ty, _Algorithm, _Memory, _Amount, _Size, _WayNumber, _TagLength>::fetch(_Ty address)
    {
      _Algorithm<_Ty> alg;
      byte index = alg(m_accesses);
@@ -203,15 +211,15 @@
      m_tags[index] = address;
      m_data[index] = *m_p2ram[address];
 
-     return std::forward<Container<_Ty, _Ty>&&>(Container(&m_data[index], &m_tags[index]));
+     return std::forward<Container<_Ty, _data_t, _tag_t>&&>(Container(&m_data[index], &m_tags[index]));
    }
 
-   template<class _Ty, class _Algorithm, byte _Amount, byte _Size, byte _WayNumber, byte _TagLength>
-   win32::Container<_Ty, _Ty>&& win32::Set<_Ty, _Algorithm, _Amount, _Size, _WayNumber, _TagLength>::operator[](_Ty address)
+   template<class _Ty, class _Algorithm, class _Memory, byte _Amount, byte _Size, byte _WayNumber, byte _TagLength>
+   win32::Container<_Ty, DataLine<_Ty, _Size>, TagLine<_Ty, _TagLength>>&& win32::Set<_Ty, _Algorithm, _Memory, _Amount, _Size, _WayNumber, _TagLength>::operator[](_Ty address)
    {
      for (byte i = 0; i < m_tags.size(); ++i) 
        if (!m_tags[i].free() && m_tags[i] == address) 
-         return std::forward<Container<_Ty, _Ty>&&>(Container(&m_data[i], &m_tags[i]));
+         return std::forward<Container<_Ty, _data_t, _tag_t>&&>(Container(&m_data[i], &m_tags[i]));
 
      return fetch(address);
    }
@@ -243,26 +251,40 @@
      using _ram_t   = RAM<_Ty, DataLine<_Ty, _SizeOfDataLine>, _Size*_SizeOfDataLine*_SetWayNumber>;
      using _line_t  = Set<_Ty, Caller<_Ty>, _ram_t, _BitsAmountInSetAlgorithm, _SizeOfDataLine, _SetWayNumber, _SetTagLength>;
 
+     using _data_t = DataLine<_Ty, _SizeOfDataLine>;
+     using _tag_t  = TagLine<_Ty, _SetTagLength>;
+
      std::array<_line_t, _Size>    m_cache;
      _ram_t                        m_memory;
+
+     _Ty initAuxConst();
+
    public:
 
-     Cache(){ m_cache.setMemoryAddress(&m_memory); }
+     Cache(){ m_cache[0].setMemoryAddress(&m_memory); }
 
      void initMemory(_Ty *sequence, dword length){ m_memory.insert(sequence, length); }
 
-     win32::Container<_Ty, _Ty>&& lookup(_Ty address);
+     win32::Container<_Ty, _data_t, _tag_t>&& lookup(_Ty address);
 
-     void stepByStepDebugTest();
+     void stepByStepDebugTest(_Ty);
 
-     void report()const;
+     void report(_Ty)const;
    };
 
    template<class _Ty /*= dword*/, size_t _Size /*= 128*/, byte _BitsAmountInSetAlgorithm /*= 3*/, byte _SizeOfDataLine /*= 4*/, byte _SetWayNumber /*= 4*/, byte _SetTagLength /*= 21*/>
-   win32::Container<_Ty, _Ty>&& win32::Cache<_Ty, _Size, _BitsAmountInSetAlgorithm, _SizeOfDataLine, _SetWayNumber, _SetTagLength>::lookup(_Ty address)
+   _Ty win32::Cache<_Ty, _Size, _BitsAmountInSetAlgorithm, _SizeOfDataLine, _SetWayNumber, _SetTagLength>::initAuxConst()
+   {
+     while (res > (_Size << 1)) res >> 1;
+     while (tmp > (sizeof(_Ty)*_SizeOfDataLine << 1)) tmp >> 1;
+     return res^tmp;
+   }
+
+   template<class _Ty /*= dword*/, size_t _Size /*= 128*/, byte _BitsAmountInSetAlgorithm /*= 3*/, byte _SizeOfDataLine /*= 4*/, byte _SetWayNumber /*= 4*/, byte _SetTagLength /*= 21*/>
+   win32::Container<_Ty, DataLine<_Ty, _SizeOfDataLine>, TagLine<_Ty, _SetTagLength>>&& win32::Cache<_Ty, _Size, _BitsAmountInSetAlgorithm, _SizeOfDataLine, _SetWayNumber, _SetTagLength>::lookup(_Ty address)
    {
      _Ty res = ~0, tmp = ~0;
-     static _Ty _SetAuxConst = (while (res > (_Size << 1)) res >> 1, while (tmp > (sizeof(_Ty)*_SizeOfDataLine << 1)) tmp >> 1, res^tmp);
+     static _Ty _SetAuxConst = initAuxConst();
      
      return m_cache[address & _SetAuxConst][address];
    }
@@ -273,7 +295,7 @@
      _Ty arr[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
      initMemory(arr, 10);
 
-     for (int i = 0; i < 10; ++i){
+     for (_Ty i = 0; i < 10; ++i){
 
        report(length);
        auto res = lookup(i*sizeof(_Ty));
@@ -295,7 +317,7 @@
      m_memory.pprint(length); /* set is sizeof(dword)*4(four in one data line)*(4+3)(four way set + extra lines for visualise write back algorithm) = 4*4*7 = 112 */
      std::cout << std::endl;
 #ifdef _DEBUG
-     getch();
+     _getch();
 #endif /* _DEBUG */
    }
 

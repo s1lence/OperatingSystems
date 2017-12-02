@@ -24,7 +24,7 @@ int main(){
     arr[i] = i;
 
   cache.initMemory(arr, 112);
-  cache.stepByStepDebugTest();
+  cache.stepByStepDebugTest(112);
 
   return 0;
 }
