@@ -333,8 +333,4 @@
 
  }
 
-#ifndef _CACHE_CPP_
-#include "Cache.cpp"
-#endif /* _CACHE_CPP_ */
- 
  #endif /* _CACHE_H_ */
