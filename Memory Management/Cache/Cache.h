@@ -46,10 +46,26 @@
    public:
      _Ty& operator[](_Ty offset){ return m_data[offset]; }
      void writeBack(_DataLine & line, _Ty address){ memcpy_s((void*)m_data[address / sizeof(_Ty)], line.size(), (const void*)&line[0], line.size()); }
-     void insert(_Ty* sequence, dword length){ memcpy_s((void*)m_data[0], m_data.size(), (const void*)sequence, length); }
+     void insert(_Ty* sequence, dword length){
+       for (int i = 0; i < length; ++i)
+         m_data[i] = i[sequence];
+       /*memcpy_s((void*)m_data[0], m_data.size(), (const void*)sequence, length);*/ 
+     }
 
-     void pprint(_Ty amount) const{ for (int i = 0; i < amount; ++i) std::cout << m_data[i] << " "; }
+     void pprint(_Ty amount) const;
    };
+
+   template<class _Ty, class _DataLine, dword _Size>
+   void win32::RAM<_Ty, _DataLine, _Size>::pprint(_Ty amount) const
+   {
+     for (int i = 0, j = 1, count = 0; i < amount; ++i){
+       if (!j / sizeof(_Ty))
+         std::cout << "\t", ++count, j = 1;
+       if (count == 3) 
+         std::cout << std::endl, count = 0;
+       std::cout << m_data[i] << " ";
+     }
+   }
 
    /*
     *	the data sequence:
@@ -302,9 +318,6 @@
    template<class _Ty /*= dword*/, size_t _Size /*= 128*/, byte _BitsAmountInSetAlgorithm /*= 3*/, byte _SizeOfDataLine /*= 4*/, byte _SetWayNumber /*= 4*/, byte _SetTagLength /*= 21*/>
    void win32::Cache<_Ty, _Size, _BitsAmountInSetAlgorithm, _SizeOfDataLine, _SetWayNumber, _SetTagLength>::stepByStepDebugTest(_Ty length)
    {
-     _Ty arr[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-     initMemory(arr, 10);
-
      for (_Ty i = 0; i < 10; ++i){
 
        report(length);
