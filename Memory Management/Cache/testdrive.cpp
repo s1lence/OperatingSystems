@@ -16,9 +16,11 @@
  
 #include "Cache.h"
 
+
 int main(){
 
   win32::Cache<> cache;
+
   win32::dword arr[112];
   for (win32::dword i=0;i<112;++i)
     arr[i] = i;

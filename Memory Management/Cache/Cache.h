@@ -45,8 +45,8 @@
 
    public:
      _Ty& operator[](_Ty offset){ return m_data[offset]; }
-     void writeBack(_DataLine & line, _Ty address){ memcpy_s(m_data[address / sizeof(_Ty)], line.size(), line[0], line.size()); }
-     void insert(_Ty* sequence, dword length){ memcpy_s((void*)m_data[0], m_data.size(), sequence, length); }
+     void writeBack(_DataLine & line, _Ty address){ memcpy_s((void*)m_data[address / sizeof(_Ty)], line.size(), (const void*)&line[0], line.size()); }
+     void insert(_Ty* sequence, dword length){ memcpy_s((void*)m_data[0], m_data.size(), (const void*)sequence, length); }
 
      void pprint(_Ty amount) const{ for (int i = 0; i < amount; ++i) std::cout << m_data[i] << " "; }
    };
@@ -60,7 +60,7 @@
      std::array<_Ty, _Length>   m_data;
 
    public:
-     _Ty& operator=(_Ty& address){ memcpy_s((void*)m_data[0], m_data.size(), (void*)address, m_data.size()); }
+     _Ty& operator=(_Ty& address){ memcpy_s((void*)m_data[0], m_data.size(), (void*)address, m_data.size()); return address; }
      _Ty& operator[](byte offset){ return m_data[offset]; }
      _Ty size()const{ return m_data.size(); }
 
@@ -85,7 +85,7 @@
      TagLine() :m_tag(0), m_free(1), m_modified(0), _Address_Offset_(initOffsetVar()){}
      ~TagLine() = default;
 
-     _Ty operator=(const _Ty address){ m_modified = 0, m_free = 0, m_tag = address >> _Address_Offset_; }
+     _Ty operator=(const _Ty address){ m_modified = 0, m_free = 0, m_tag = address >> _Address_Offset_; return address; }
      bool operator==(const _Ty address) const{ return address >> _Address_Offset_ == m_tag; }
 
      operator _Ty() const{ return m_tag; }
@@ -114,35 +114,40 @@
      _TyTag   * m_tag;
 
    public:
-     Container(const _TyData *data, const _TyTag *tag) :m_data(data), m_tag(tag){}
+     Container(_TyData *data, _TyTag *tag) :m_data(data), m_tag(tag){}
      Container(const Container&& obj) :m_data(obj.m_data), m_tag(obj.m_tag){}
 
      operator _Ty() const{ return *m_data; }
-     _Ty operator=(_Ty&& data){ m_tag->modify(), *m_data = data; }
+     _Ty operator=(_Ty&& data){ m_tag->modify(), *m_data = data; return data; }
      Container&& operator=(Container&& obj){ m_data = obj.m_data, m_tag = obj.m_tag, return std::forward(obj); }
    };
 
    /*
     *	pseudo-LRU algorithm for four-way set
-    *	it's simply changes states
+    *	returns next state, sets current index
     */
    template<class _Ty>
    struct Caller{
 
-     _Ty operator()(_Ty& state){
+     template<class _T>
+     _Ty operator()(_T& index, _Ty state){
        switch (state){
 
        case 0: /* line 0 */
-         return state = 6, 0; /* 110 */
+         index = 0;
+         return 6; /* 110 */
 
        case 6: /* line 2 */
-         return state = 3, 2; /* 011 */
+         index = 2;
+         return 3; /* 011 */
 
        case 3: /* line 1 */
-         return state = 5, 1; /* 101 */
+         index = 1;
+         return 5; /* 101 */
 
        case 5: /* line 3 */
-         return state = 0, 3; /* 000 */
+         index = 3;
+         return 0; /* 000 */
 
        }
      }
@@ -179,6 +184,8 @@
      using _tag_t  = TagLine<_Ty, _TagLength>;
      using _data_t = DataLine<_Ty, _Size>;
 
+     using _cont_t = Container<_Ty, _data_t, _tag_t>;
+
      std::array<_tag_t, _WayNumber>    m_tags;
      std::array<_data_t, _WayNumber>   m_data;
      _Ty                               m_accesses : _Amount;
@@ -190,28 +197,31 @@
 
      Set(_Ty state = 0) :m_accesses(state){}
 
-     Container<_Ty, _data_t, _tag_t>&& fetch(_Ty address);
+     _cont_t&& fetch(_Ty address);
 
-     void setMemoryAddress(_Memory * p2ram){ m_p2ram = p2ram; }
+     static void setMemoryAddress(_Memory * p2ram){ m_p2ram = p2ram; }
 
-     Container<_Ty, _data_t, _tag_t>&& operator[](_Ty address);
+     _cont_t&& operator[](_Ty address);
 
      void pprint() const;
    };
 
    template<class _Ty, class _Algorithm, class _Memory, byte _Amount, byte _Size, byte _WayNumber, byte _TagLength>
+   _Memory * Set<_Ty, _Algorithm, _Memory, _Amount, _Size, _WayNumber, _TagLength>::m_p2ram;
+
+   template<class _Ty, class _Algorithm, class _Memory, byte _Amount, byte _Size, byte _WayNumber, byte _TagLength>
    win32::Container<_Ty, DataLine<_Ty, _Size>, TagLine<_Ty, _TagLength>>&& win32::Set<_Ty, _Algorithm, _Memory, _Amount, _Size, _WayNumber, _TagLength>::fetch(_Ty address)
    {
-     _Algorithm<_Ty> alg;
-     byte index = alg(m_accesses);
+     _Algorithm alg; byte index;
+     m_accesses = alg(index, m_accesses);
 
      if (m_tags[index].modified())
        m_p2ram->writeBack(m_data[index], (_Ty)m_tags[index] & (_AddressAuxiliaryConst_ & address));
 
      m_tags[index] = address;
-     m_data[index] = *m_p2ram[address];
+     m_data[index] = (*m_p2ram)[address];
 
-     return std::forward<Container<_Ty, _data_t, _tag_t>&&>(Container(&m_data[index], &m_tags[index]));
+     return std::forward<_cont_t&&>(Container<_Ty, _data_t, _tag_t>(&m_data[index], &m_tags[index]));
    }
 
    template<class _Ty, class _Algorithm, class _Memory, byte _Amount, byte _Size, byte _WayNumber, byte _TagLength>
@@ -219,7 +229,7 @@
    {
      for (byte i = 0; i < m_tags.size(); ++i) 
        if (!m_tags[i].free() && m_tags[i] == address) 
-         return std::forward<Container<_Ty, _data_t, _tag_t>&&>(Container(&m_data[i], &m_tags[i]));
+         return std::forward<_cont_t&&>(Container<_Ty, _data_t, _tag_t>(&m_data[i], &m_tags[i]));
 
      return fetch(address);
    }
@@ -261,7 +271,7 @@
 
    public:
 
-     Cache(){ m_cache[0].setMemoryAddress(&m_memory); }
+     Cache(){ _line_t::setMemoryAddress(&m_memory); }
 
      void initMemory(_Ty *sequence, dword length){ m_memory.insert(sequence, length); }
 
@@ -275,6 +285,7 @@
    template<class _Ty /*= dword*/, size_t _Size /*= 128*/, byte _BitsAmountInSetAlgorithm /*= 3*/, byte _SizeOfDataLine /*= 4*/, byte _SetWayNumber /*= 4*/, byte _SetTagLength /*= 21*/>
    _Ty win32::Cache<_Ty, _Size, _BitsAmountInSetAlgorithm, _SizeOfDataLine, _SetWayNumber, _SetTagLength>::initAuxConst()
    {
+     _Ty res = ~0, tmp = ~0;
      while (res > (_Size << 1)) res >> 1;
      while (tmp > (sizeof(_Ty)*_SizeOfDataLine << 1)) tmp >> 1;
      return res^tmp;
@@ -283,7 +294,6 @@
    template<class _Ty /*= dword*/, size_t _Size /*= 128*/, byte _BitsAmountInSetAlgorithm /*= 3*/, byte _SizeOfDataLine /*= 4*/, byte _SetWayNumber /*= 4*/, byte _SetTagLength /*= 21*/>
    win32::Container<_Ty, DataLine<_Ty, _SizeOfDataLine>, TagLine<_Ty, _SetTagLength>>&& win32::Cache<_Ty, _Size, _BitsAmountInSetAlgorithm, _SizeOfDataLine, _SetWayNumber, _SetTagLength>::lookup(_Ty address)
    {
-     _Ty res = ~0, tmp = ~0;
      static _Ty _SetAuxConst = initAuxConst();
      
      return m_cache[address & _SetAuxConst][address];
@@ -322,5 +332,9 @@
    }
 
  }
+
+#ifndef _CACHE_CPP_
+#include "Cache.cpp"
+#endif /* _CACHE_CPP_ */
  
  #endif /* _CACHE_H_ */
