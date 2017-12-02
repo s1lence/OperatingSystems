@@ -21,12 +21,14 @@ int main(){
 
   win32::Cache<> cache;
 
-  win32::dword arr[112];
-  for (win32::dword i=0;i<112;++i)
-    arr[i] = i;
+  const int arr_size = 32;
+  win32::dword arr[arr_size];
 
-  cache.initMemory(arr, 112);
-  cache.stepByStepDebugTest(112);
+  for (win32::dword i = 0; i < arr_size; ++i)
+    arr[i] = i * 78 + 0x210;
+
+  cache.initMemory(arr, arr_size);
+  cache.stepByStepDebugTest(arr_size);
 
   return 0;
 }
