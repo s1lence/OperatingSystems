@@ -56,21 +56,11 @@
    template<class _Ty, class _DataLine, dword _Size>
    void win32::RAM<_Ty, _DataLine, _Size>::writeBack(_DataLine & line, _Ty address)
    {
-     std::cout << "SHIT HAPPENS =/" << std::endl;
-     
-     //if (0 != address) /* fix for zero address as destination in memcpy_s function */
-     //  memcpy_s((void*)address, line.size()*sizeof(_Ty), (const void*)(&line[0]), line.size()*sizeof(_Ty));
-     //else{
-     //  address = line[0];
-     //  memcpy_s((void*)(address + sizeof(_Ty)), (line.size() - 1)*sizeof(_Ty), (const void*)(&line[1]), (line.size() - 1)*sizeof(_Ty));
-     //}
-
-     
+     std::cout << "Cache line have been written to 0x" << std::setfill('0') << std::setw(sizeof(_Ty)) << std::hex << address - address % sizeof(_Ty) << "h." << std::endl;
      address -= address % sizeof(_Ty);
+
      for (int i = 0; i < line.size(); ++i)
-       /*memcpy_s((void*)(address + i*sizeof(_Ty)), 1, (void*)&line[i], 1);*/
        m_data[address + i] = line[i];
-     //memcpy_s((void*)m_data[address / sizeof(_Ty)], line.size(), (const void*)&line[0], line.size());
    }
 
    template<class _Ty, class _DataLine, dword _Size>
@@ -130,7 +120,7 @@
      _Ty operator=(const _Ty address){ m_modified = 0, m_free = 0, m_tag = address >> _Address_Offset_; return address; }
      bool operator==(const _Ty address) const{ return address >> _Address_Offset_ == m_tag; }
 
-     operator _Ty() const{ return m_tag; }
+     operator _Ty() const{ return m_tag << sizeof(_Ty) * 8 - _Length; }
 
      void modify(){ m_modified = 1; }
      bool modified() const{ return m_modified; }
@@ -235,7 +225,6 @@
      _Ty                               m_accesses : _Amount;
 
      static _Memory * m_p2ram;
-     static const _Ty _AddressAuxiliaryConst_ = ~0 >> _TagLength;
 
    public:
 
@@ -256,11 +245,11 @@
    template<class _Ty, class _Algorithm, class _Memory, byte _Amount, byte _Size, byte _WayNumber, byte _TagLength>
    win32::Container<_Ty, DataLine<_Ty, _Size>, TagLine<_Ty, _TagLength>>&& win32::Set<_Ty, _Algorithm, _Memory, _Amount, _Size, _WayNumber, _TagLength>::fetch(_Ty address)
    {
-     _Algorithm alg; byte index;
+     _Algorithm alg; byte index; _Ty _AddressAuxiliaryConst_ = ~0; _AddressAuxiliaryConst_ >>= _TagLength;
      m_accesses = alg(index, m_accesses);
 
      if (m_tags[index].modified())
-       m_p2ram->writeBack(m_data[index], (_Ty)m_tags[index] & _AddressAuxiliaryConst_ & address);
+         m_p2ram->writeBack(m_data[index], (_Ty)m_tags[index] | (_AddressAuxiliaryConst_ & address));
 
      m_tags[index] = address;
 
@@ -373,9 +362,9 @@
    {
      for (_Ty i = 0; i < 10; ++i){
        auto res = lookup(i);
-       std::cout << "Operation: accessing address: 0x" << std::hex << i << std::endl;
+       std::cout << "Operation: accessing address: 0x" << std::setfill('0') << std::setw(sizeof(_Ty)) << std::hex << i << "h." << std::endl;
        report(length);
-       std::cout << "Operation: write '" << i * 0x256 + 123 << "' by 0x" << std::hex << i*sizeof(_Ty) << " address." << std::endl;
+       std::cout << "Operation: write '" << i * i + 123 << "' to 0x" << std::setfill('0') << std::setw(sizeof(_Ty)) << std::hex << i << "h address." << std::endl;
        res.set(i * 0x256 + 123, i % sizeof(_Ty));
        report(length);
      }
@@ -389,10 +378,10 @@
      for (_Ty i = 0; i < length; ++i){
        for (_Ty k = 0; k < 5; ++k){
          auto res = lookup((i + k*offset));
-         std::cout << "Operation: accessing address: 0x" << std::hex << (i + k*offset) << std::endl;
+         std::cout << "Operation: accessing address: 0x" << std::setfill('0') << std::setw(sizeof(_Ty)) << std::hex << (i + k*offset) << "h." << std::endl;
          reportSpecial(length, offset);
-         std::cout << "Operation: write '" << (i + k*offset) * i * 0x256 + 123 << "' by 0x" << std::hex << (i + k*offset) << " address." << std::endl;
-         res.set((i + k*offset) * i * 0x256 + 123, (i + k*offset) % sizeof(_Ty));
+         std::cout << "Operation: write '" << (i + k*offset) * i + 123 << "' to 0x" <<std::setfill('0') << std::setw(sizeof(_Ty)) << std::hex << (i + k*offset) << "h address." << std::endl;
+         res.set((i + k*offset) * i + 123, (i + k*offset) % sizeof(_Ty));
          reportSpecial(length, offset);
        }
      }
@@ -423,7 +412,7 @@
 
      std::cout << "Memory map:" << std::endl;
      for (int k = 0; k < 5; ++k)
-       std::cout << "0x" << std::setw(sizeof(_Ty)*2) << std::hex << k*offset << "|", m_memory.pprint(length, k*offset), std::cout << std::endl;
+       std::cout << "0x" <<std::setfill('0')<< std::setw(sizeof(_Ty)) << std::hex << k*offset << "h |  ", m_memory.pprint(length, k*offset), std::cout << std::endl;
 
      std::cout << std::endl;
      for (int i = 0; i < 92; ++i)std::cout << '_';
