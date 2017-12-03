@@ -31,6 +31,7 @@ int main(){
   cache.stepByStepDebugTest(arr_size, 0);
 
   system("cls");
+  std::cout << "Testing write-back data saving." << std::endl;  
 
   unsigned offset = 2048, length = 16;
   for (int k = 0; k < 5; ++k){

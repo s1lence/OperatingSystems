@@ -365,7 +365,7 @@
    template<class _Ty /*= dword*/, size_t _Size /*= 128*/, byte _BitsAmountInSetAlgorithm /*= 3*/, byte _SizeOfDataLine /*= 4*/, byte _SetWayNumber /*= 4*/, byte _SetTagLength /*= 21*/>
    void win32::Cache<_Ty, _Size, _BitsAmountInSetAlgorithm, _SizeOfDataLine, _SetWayNumber, _SetTagLength>::testConsistentAccess(_Ty length)
    {
-     for (_Ty i = 0; i < 10; ++i){
+     for (_Ty i = 0; i < 10; i+=sizeof(_Ty)){
        auto res = lookup(i);
        std::cout << "Operation: accessing address: 0x" << std::setfill('0') << std::setw(sizeof(_Ty)) << std::hex << i << "h." << std::endl;
        report(length);
