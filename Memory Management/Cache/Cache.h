@@ -241,7 +241,7 @@
 
      _cont_t&& operator[](_Ty address);
 
-     void pprint(bool all = false) const;
+     void pprint(bool all = false, _Ty = -1) const;
    };
 
    template<class _Ty, class _Algorithm, class _Memory, byte _Amount, byte _Size, byte _WayNumber, byte _TagLength>
@@ -276,12 +276,13 @@
    }
 
    template<class _Ty, class _Algorithm, class _Memory, byte _Amount, byte _Size, byte _WayNumber, byte _TagLength>
-   void win32::Set<_Ty, _Algorithm, _Memory, _Amount, _Size, _WayNumber, _TagLength>::pprint(bool all) const
+   void win32::Set<_Ty, _Algorithm, _Memory, _Amount, _Size, _WayNumber, _TagLength>::pprint(bool all, _Ty number) const
    {
      for (int i = 0; i < _WayNumber; ++i)
        if (all || !m_tags[i].free())
        {
          std::cout << "|  ";
+         if (number != -1)std::cout << "set #" << std::setw(sizeof(_Ty))<< number << "|  ";
          m_tags[i].pprint();
          std::cout << "  |  ";
          m_data[i].pprint();
@@ -299,7 +300,7 @@
    template<class _Ty = dword, size_t _Size = 128, byte _BitsAmountInSetAlgorithm = 3, byte _SizeOfDataLine = 4, byte _SetWayNumber = 4, byte _SetTagLength = 21>
    class Cache{
 
-     using _ram_t = RAM<_Ty, DataLine<_Ty, _SizeOfDataLine>, _Size * _SizeOfDataLine * _SetWayNumber * (_SetWayNumber + 1)>;
+     using _ram_t = RAM<_Ty, DataLine<_Ty, _SizeOfDataLine>, _Size * _SizeOfDataLine * _SetWayNumber * (_SetWayNumber + 20)>;
      using _line_t  = Set<_Ty, Caller<_Ty>, _ram_t, _BitsAmountInSetAlgorithm, _SizeOfDataLine, _SetWayNumber, _SetTagLength>;
 
      using _data_t = DataLine<_Ty, _SizeOfDataLine>;
@@ -377,7 +378,7 @@
    void win32::Cache<_Ty, _Size, _BitsAmountInSetAlgorithm, _SizeOfDataLine, _SetWayNumber, _SetTagLength>::testWriteBack(_Ty length)
    {
      _Ty offset = _Size * _SizeOfDataLine * _SetWayNumber;
-     for (_Ty i = 0; i < 5; ++i){
+     for (_Ty i = 0; i < 30; ++i){
        auto res = lookup((i + offset)*sizeof(_Ty));
        std::cout << "Operation: accessing address: 0x" << std::hex << (i + offset)*sizeof(_Ty) << std::endl;
        report(length, offset);
@@ -391,9 +392,9 @@
    template<class _Ty /*= dword*/, size_t _Size /*= 128*/, byte _BitsAmountInSetAlgorithm /*= 3*/, byte _SizeOfDataLine /*= 4*/, byte _SetWayNumber /*= 4*/, byte _SetTagLength /*= 21*/>
    void win32::Cache<_Ty, _Size, _BitsAmountInSetAlgorithm, _SizeOfDataLine, _SetWayNumber, _SetTagLength>::report(_Ty length = 112, _Ty offset = 0) const
    {
-     std::cout << "Sets state:" << std::endl;
-     /*for(auto i:m_cache) i.pprint();*/
-     m_cache[0].pprint(true);
+     std::cout << "Sets state:" << std::endl; int k = 0;
+     for (auto i : m_cache) { ++k; i.pprint(false, k); }
+     //m_cache[0].pprint(true);
      std::cout << "Memory map:" << std::endl;
      m_memory.pprint(length, offset); /* set is sizeof(dword)*4(four in one data line)*(4+3)(four way set + extra lines for visualise write back algorithm) = 4*4*7 = 112 */
      std::cout << std::endl;
