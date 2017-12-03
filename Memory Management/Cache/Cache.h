@@ -58,20 +58,26 @@
    {
      std::cout << "SHIT HAPPENS =/" << std::endl;
      
+     //if (0 != address) /* fix for zero address as destination in memcpy_s function */
+     //  memcpy_s((void*)address, line.size()*sizeof(_Ty), (const void*)(&line[0]), line.size()*sizeof(_Ty));
+     //else{
+     //  address = line[0];
+     //  memcpy_s((void*)(address + sizeof(_Ty)), (line.size() - 1)*sizeof(_Ty), (const void*)(&line[1]), (line.size() - 1)*sizeof(_Ty));
+     //}
+
      
-     memcpy_s((void*)address, line.size()*sizeof(_Ty), (const void*)&line[0], line.size()*sizeof(_Ty));
-     
-     /*address -= address % sizeof(_Ty);
+     address -= address % sizeof(_Ty);
      for (int i = 0; i < line.size(); ++i)
-       memcpy_s(address + i*sizeof(_Ty), 1, &line[i], 1);*/
+       /*memcpy_s((void*)(address + i*sizeof(_Ty)), 1, (void*)&line[i], 1);*/
+       m_data[address + i] = line[i];
      //memcpy_s((void*)m_data[address / sizeof(_Ty)], line.size(), (const void*)&line[0], line.size());
    }
 
    template<class _Ty, class _DataLine, dword _Size>
    void win32::RAM<_Ty, _DataLine, _Size>::insert(_Ty* sequence, dword length, dword offset)
    {
-     for (int i = offset; i < length; ++i)
-       m_data[i] = i[sequence];
+     for (int i = 0; i < length; ++i)
+       m_data[i + offset] = i[sequence];
      /*memcpy_s((void*)m_data[0], m_data.size(), (const void*)sequence, length);*/
    }
 
@@ -300,7 +306,7 @@
    template<class _Ty = dword, size_t _Size = 128, byte _BitsAmountInSetAlgorithm = 3, byte _SizeOfDataLine = 4, byte _SetWayNumber = 4, byte _SetTagLength = 21>
    class Cache{
 
-     using _ram_t = RAM<_Ty, DataLine<_Ty, _SizeOfDataLine>, _Size * _SizeOfDataLine * _SetWayNumber * (_SetWayNumber + 20)>;
+     using _ram_t = RAM<_Ty, DataLine<_Ty, _SizeOfDataLine>, _Size * _SizeOfDataLine * _SetWayNumber * _SetWayNumber * _SetWayNumber>;
      using _line_t  = Set<_Ty, Caller<_Ty>, _ram_t, _BitsAmountInSetAlgorithm, _SizeOfDataLine, _SetWayNumber, _SetTagLength>;
 
      using _data_t = DataLine<_Ty, _SizeOfDataLine>;
@@ -326,6 +332,7 @@
      void testWriteBack(_Ty);
 
      void report(_Ty, _Ty = 0)const;
+     void reportSpecial(_Ty, _Ty = 0)const;
    };
 
    template<class _Ty /*= dword*/, size_t _Size /*= 128*/, byte _BitsAmountInSetAlgorithm /*= 3*/, byte _SizeOfDataLine /*= 4*/, byte _SetWayNumber /*= 4*/, byte _SetTagLength /*= 21*/>
@@ -365,11 +372,11 @@
    void win32::Cache<_Ty, _Size, _BitsAmountInSetAlgorithm, _SizeOfDataLine, _SetWayNumber, _SetTagLength>::testConsistentAccess(_Ty length)
    {
      for (_Ty i = 0; i < 10; ++i){
-       auto res = lookup(i*sizeof(_Ty));
-       std::cout << "Operation: accessing address: 0x" << std::hex << i*sizeof(_Ty) << std::endl;
+       auto res = lookup(i);
+       std::cout << "Operation: accessing address: 0x" << std::hex << i << std::endl;
        report(length);
-       std::cout << "Operation: write '" << i * 2 << "' by 0x" << std::hex << i*sizeof(_Ty) << " address." << std::endl;
-       res.set(i * 2, i % sizeof(_Ty));
+       std::cout << "Operation: write '" << i * 0x256 + 123 << "' by 0x" << std::hex << i*sizeof(_Ty) << " address." << std::endl;
+       res.set(i * 0x256 + 123, i % sizeof(_Ty));
        report(length);
      }
    }
@@ -378,13 +385,16 @@
    void win32::Cache<_Ty, _Size, _BitsAmountInSetAlgorithm, _SizeOfDataLine, _SetWayNumber, _SetTagLength>::testWriteBack(_Ty length)
    {
      _Ty offset = _Size * _SizeOfDataLine * _SetWayNumber;
-     for (_Ty i = 0; i < 30; ++i){
-       auto res = lookup((i + offset)*sizeof(_Ty));
-       std::cout << "Operation: accessing address: 0x" << std::hex << (i + offset)*sizeof(_Ty) << std::endl;
-       report(length, offset);
-       std::cout << "Operation: write '" << (i + offset) * 2 << "' by 0x" << std::hex << (i + offset)*sizeof(_Ty) << " address." << std::endl;
-       res.set((i + offset) * 2, (i + offset) % sizeof(_Ty));
-       report(length, offset);
+
+     for (_Ty i = 0; i < length; ++i){
+       for (_Ty k = 0; k < 5; ++k){
+         auto res = lookup((i + k*offset));
+         std::cout << "Operation: accessing address: 0x" << std::hex << (i + k*offset) << std::endl;
+         reportSpecial(length, offset);
+         std::cout << "Operation: write '" << (i + k*offset) * i * 0x256 + 123 << "' by 0x" << std::hex << (i + k*offset) << " address." << std::endl;
+         res.set((i + k*offset) * i * 0x256 + 123, (i + k*offset) % sizeof(_Ty));
+         reportSpecial(length, offset);
+       }
      }
    }
 
@@ -400,6 +410,25 @@
      std::cout << std::endl;
      for (int i = 0; i < 92; ++i)std::cout << '_';
      std::cout << std::endl << std::endl;
+#ifdef _DEBUG
+     _getch();
+#endif /* _DEBUG */
+   }
+   
+   template<class _Ty /*= dword*/, size_t _Size /*= 128*/, byte _BitsAmountInSetAlgorithm /*= 3*/, byte _SizeOfDataLine /*= 4*/, byte _SetWayNumber /*= 4*/, byte _SetTagLength /*= 21*/>
+   void win32::Cache<_Ty, _Size, _BitsAmountInSetAlgorithm, _SizeOfDataLine, _SetWayNumber, _SetTagLength>::reportSpecial(_Ty length, _Ty /*= 0*/ offset) const
+   {
+     std::cout << "Sets state:" << std::endl; int k = 0;
+     for (auto i : m_cache) { ++k; i.pprint(false, k); }
+
+     std::cout << "Memory map:" << std::endl;
+     for (int k = 0; k < 5; ++k)
+       std::cout << "0x" << std::setw(sizeof(_Ty)*2) << std::hex << k*offset << "|", m_memory.pprint(length, k*offset), std::cout << std::endl;
+
+     std::cout << std::endl;
+     for (int i = 0; i < 92; ++i)std::cout << '_';
+     std::cout << std::endl << std::endl;
+
 #ifdef _DEBUG
      _getch();
 #endif /* _DEBUG */

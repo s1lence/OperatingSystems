@@ -31,7 +31,7 @@ int main(){
   //cache.stepByStepDebugTest(arr_size, 0);
   system("cls");
 
-  unsigned offset = 4096, length = 16;
+  unsigned offset = 2048, length = 16;
   for (int k = 0; k < 5; ++k){
     
     for (int i = 0; i < length; ++i) /* reinitializing array */
