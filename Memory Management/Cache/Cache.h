@@ -68,7 +68,6 @@
    {
      for (int i = 0; i < length; ++i)
        m_data[i + offset] = i[sequence];
-     /*memcpy_s((void*)m_data[0], m_data.size(), (const void*)sequence, length);*/
    }
 
    template<class _Ty, class _DataLine, dword _Size>
@@ -77,9 +76,11 @@
      for (int i = 0, j = 0, count = 0; i < amount; ++i, ++j){
        if (j / sizeof(_Ty))
          std::cout << "\t", ++count, j = 0;
+
        if (count == 4) 
          std::cout << std::endl, count = 0;
-       std::cout << std::setw(sizeof(_Ty)) << std::hex << m_data[i + offset] << " ";
+
+       std::cout << std::setfill('0') << std::setw(sizeof(_Ty)) << std::hex << m_data[i + offset] << " ";
      }
    }
 
@@ -96,7 +97,7 @@
      _Ty& operator[](byte offset){ return m_data[offset]; }
      _Ty size()const{ return m_data.size(); }
 
-     void pprint() const{ for (auto i : m_data) std::cout << std::setw(sizeof(_Ty) * 2) << std::hex << i << " "; }
+     void pprint() const{ for (auto i : m_data) std::cout << std::setw(sizeof(_Ty)) << std::hex << i << " "; }
    };
 
    /*
@@ -150,11 +151,16 @@
      Container(_TyData *data, _TyTag *tag) :m_data(data), m_tag(tag){}
      Container(const Container&& obj) :m_data(obj.m_data), m_tag(obj.m_tag){}
 
-     /*operator _Ty() const{ return *m_data; }*/
      _Ty operator=(_Ty&& data) = delete; /* prohibited for assignment correctness */
-     void set(_Ty data, _Ty address) { m_tag->modify(); (*m_data)[address] = data; }
+     void set(_Ty data, _Ty address);
      Container&& operator=(Container&& obj){ m_data = obj.m_data, m_tag = obj.m_tag, return std::forward(obj); }
    };
+
+   template<class _Ty, class _TyData, class _TyTag>
+   void win32::Container<_Ty, _TyData, _TyTag>::set(_Ty data, _Ty address)
+   {
+     m_tag->modify(); (*m_data)[address/sizeof(_Ty)] = data;
+   }
 
    /*
     *	pseudo-LRU algorithm for four-way set
@@ -256,7 +262,6 @@
      for (_Ty i = 0; i < sizeof(_Ty); ++i)
        m_data[index][i] = (*m_p2ram)[address - address % sizeof(_Ty) + i];
 
-     //m_data[index] = (*m_p2ram)[address - address % sizeof(_Ty)];
      return std::forward<_cont_t&&>(Container<_Ty, _data_t, _tag_t>(&m_data[index], &m_tags[index]));
    }
 
@@ -364,8 +369,8 @@
        auto res = lookup(i);
        std::cout << "Operation: accessing address: 0x" << std::setfill('0') << std::setw(sizeof(_Ty)) << std::hex << i << "h." << std::endl;
        report(length);
-       std::cout << "Operation: write '" << i * i + 123 << "' to 0x" << std::setfill('0') << std::setw(sizeof(_Ty)) << std::hex << i << "h address." << std::endl;
-       res.set(i * 0x256 + 123, i % sizeof(_Ty));
+       std::cout << "Operation: write '" << std::setfill('0') << std::setw(sizeof(_Ty)) << std::hex << i * i + 123 << "' to 0x" << std::setfill('0') << std::setw(sizeof(_Ty)) << std::hex << i << "h address." << std::endl;
+       res.set(i * i + 123, i);
        report(length);
      }
    }
@@ -380,8 +385,8 @@
          auto res = lookup((i + k*offset));
          std::cout << "Operation: accessing address: 0x" << std::setfill('0') << std::setw(sizeof(_Ty)) << std::hex << (i + k*offset) << "h." << std::endl;
          reportSpecial(length, offset);
-         std::cout << "Operation: write '" << (i + k*offset) * i + 123 << "' to 0x" <<std::setfill('0') << std::setw(sizeof(_Ty)) << std::hex << (i + k*offset) << "h address." << std::endl;
-         res.set((i + k*offset) * i + 123, (i + k*offset) % sizeof(_Ty));
+         std::cout << "Operation: write '" << std::setfill('0') << std::setw(sizeof(_Ty)) << std::hex << (i + k*offset) * i + 123 << "' to 0x" << std::setfill('0') << std::setw(sizeof(_Ty)) << std::hex << (i + k*offset) << "h address." << std::endl;
+         res.set((i + k*offset) * i + 123, (i + k*offset));
          reportSpecial(length, offset);
        }
      }
@@ -389,15 +394,14 @@
 
     /* this is a simple test case for the model: prints first set and memory enough to overwrite it's content */
    template<class _Ty /*= dword*/, size_t _Size /*= 128*/, byte _BitsAmountInSetAlgorithm /*= 3*/, byte _SizeOfDataLine /*= 4*/, byte _SetWayNumber /*= 4*/, byte _SetTagLength /*= 21*/>
-   void win32::Cache<_Ty, _Size, _BitsAmountInSetAlgorithm, _SizeOfDataLine, _SetWayNumber, _SetTagLength>::report(_Ty length = 112, _Ty offset = 0) const
+   void win32::Cache<_Ty, _Size, _BitsAmountInSetAlgorithm, _SizeOfDataLine, _SetWayNumber, _SetTagLength>::report(_Ty length, _Ty offset) const
    {
      std::cout << "Sets state:" << std::endl; int k = 0;
      for (auto i : m_cache) { ++k; i.pprint(false, k); }
-     //m_cache[0].pprint(true);
      std::cout << "Memory map:" << std::endl;
-     m_memory.pprint(length, offset); /* set is sizeof(dword)*4(four in one data line)*(4+3)(four way set + extra lines for visualise write back algorithm) = 4*4*7 = 112 */
+     m_memory.pprint(length, offset);
      std::cout << std::endl;
-     for (int i = 0; i < 92; ++i)std::cout << '_';
+     for (int i = 0; i < 100; ++i)std::cout << '_';
      std::cout << std::endl << std::endl;
 #ifdef _DEBUG
      _getch();
@@ -415,7 +419,7 @@
        std::cout << "0x" <<std::setfill('0')<< std::setw(sizeof(_Ty)) << std::hex << k*offset << "h |  ", m_memory.pprint(length, k*offset), std::cout << std::endl;
 
      std::cout << std::endl;
-     for (int i = 0; i < 92; ++i)std::cout << '_';
+     for (int i = 0; i < 100; ++i)std::cout << '_';
      std::cout << std::endl << std::endl;
 
 #ifdef _DEBUG

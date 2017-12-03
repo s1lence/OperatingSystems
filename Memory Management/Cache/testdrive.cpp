@@ -28,7 +28,8 @@ int main(){
     arr[i] = i * 78 + 0x210;
 
   cache.initMemory(arr, arr_size);
-  //cache.stepByStepDebugTest(arr_size, 0);
+  cache.stepByStepDebugTest(arr_size, 0);
+
   system("cls");
 
   unsigned offset = 2048, length = 16;
