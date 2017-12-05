@@ -30,6 +30,7 @@ int main(){
   cache.initMemory(arr, arr_size);
   cache.stepByStepDebugTest(arr_size, 0);
 
+  cache.flush();
   system("cls");
   std::cout << "Testing write-back data saving." << std::endl;  
 

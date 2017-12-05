@@ -127,6 +127,7 @@
      bool modified() const{ return m_modified; }
      bool free() const{ return m_free; }
      void pprint() const{ std::cout << "t: 0x" << std::setw(_Length) << std::bitset<_Length>(m_tag) << " f: " << m_free << " m:" << m_modified; }
+     void erase(){ m_modified = 0, m_free = 1; }
    };
 
    template<class _Ty, byte _Length>
@@ -236,6 +237,8 @@
 
      Set(_Ty state = 0) :m_accesses(state){}
 
+     void flush(size_t number);
+
      _cont_t&& fetch(_Ty address);
 
      static void setMemoryAddress(_Memory * p2ram){ m_p2ram = p2ram; }
@@ -244,6 +247,15 @@
 
      void pprint(bool all = false, _Ty = -1) const;
    };
+
+   template<class _Ty, class _Algorithm, class _Memory, byte _Amount, byte _Size, byte _WayNumber, byte _TagLength>
+   void win32::Set<_Ty, _Algorithm, _Memory, _Amount, _Size, _WayNumber, _TagLength>::flush(size_t number)
+   {
+     _Ty tmp = number; tmp <<= _Size;
+
+     for (_Ty i = 0; i < _Size; ++i)
+       if (m_tags[i].modified()) m_p2ram->writeBack(m_data[i], (_Ty)m_tags[i] | tmp), m_tags[i].erase();
+   }
 
    template<class _Ty, class _Algorithm, class _Memory, byte _Amount, byte _Size, byte _WayNumber, byte _TagLength>
    _Memory * Set<_Ty, _Algorithm, _Memory, _Amount, _Size, _WayNumber, _TagLength>::m_p2ram;
@@ -315,6 +327,8 @@
 
      Cache(){ _line_t::setMemoryAddress(&m_memory); }
 
+     void flush();
+
      void initMemory(_Ty *sequence, dword length, _Ty offset = 0){ m_memory.insert(sequence, length, offset); }
 
      win32::Container<_Ty, _data_t, _tag_t>&& lookup(_Ty address);
@@ -328,6 +342,13 @@
      void report(_Ty, _Ty = 0)const;
      void reportSpecial(_Ty, _Ty = 0)const;
    };
+
+   template<class _Ty /*= dword*/, size_t _Size /*= 128*/, byte _BitsAmountInSetAlgorithm /*= 3*/, byte _SizeOfDataLine /*= 4*/, byte _SetWayNumber /*= 4*/, byte _SetTagLength /*= 21*/>
+   void win32::Cache<_Ty, _Size, _BitsAmountInSetAlgorithm, _SizeOfDataLine, _SetWayNumber, _SetTagLength>::flush()
+   {
+     for (size_t i = 0; i < _Size; ++i)
+       m_cache[i].flush(i);
+   }
 
    template<class _Ty /*= dword*/, size_t _Size /*= 128*/, byte _BitsAmountInSetAlgorithm /*= 3*/, byte _SizeOfDataLine /*= 4*/, byte _SetWayNumber /*= 4*/, byte _SetTagLength /*= 21*/>
    _Ty win32::Cache<_Ty, _Size, _BitsAmountInSetAlgorithm, _SizeOfDataLine, _SetWayNumber, _SetTagLength>::initAuxConst()
@@ -382,7 +403,7 @@
 
      for (_Ty i = 0; i < length; ++i){
        for (_Ty k = 0; k < 5; ++k){
-         auto res = lookup((i + k*offset));
+         auto res = lookup(i + k*offset);
          std::cout << "Operation: accessing address: 0x" << std::setfill('0') << std::setw(sizeof(_Ty)) << std::hex << (i + k*offset) << "h." << std::endl;
          reportSpecial(length, offset);
          std::cout << "Operation: write '" << std::setfill('0') << std::setw(sizeof(_Ty)) << std::hex << (i + k*offset) * i + 123 << "' to 0x" << std::setfill('0') << std::setw(sizeof(_Ty)) << std::hex << (i + k*offset) << "h address." << std::endl;
@@ -412,7 +433,7 @@
    void win32::Cache<_Ty, _Size, _BitsAmountInSetAlgorithm, _SizeOfDataLine, _SetWayNumber, _SetTagLength>::reportSpecial(_Ty length, _Ty /*= 0*/ offset) const
    {
      std::cout << "Sets state:" << std::endl; int k = 0;
-     for (auto i : m_cache) { ++k; i.pprint(false, k); }
+     /*for (auto i : m_cache) { ++k; i.pprint(false, k); }*/ m_cache[0].pprint(true);
 
      std::cout << "Memory map:" << std::endl;
      for (int k = 0; k < 5; ++k)
