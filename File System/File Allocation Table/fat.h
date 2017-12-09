@@ -28,7 +28,6 @@ namespace fat16{
   public:
     virtual ~Entity() = 0;
     virtual void pprint() = 0;
-    virtual size_t setSize(size_t){}
     virtual bool operator==(std::string&){ return false; }
     virtual bool operator==(Entity*){ return false; }
     virtual bool operator<=(size_t){ return false; }
@@ -44,11 +43,8 @@ namespace fat16{
     virtual bool operator==(Entity* ent) override{ return nullptr != dynamic_cast<File*>(ent) ? m_name == dynamic_cast<File*>(ent)->m_name : false; }
     virtual bool operator<=(size_t size) override{ return m_size <= size; }
     virtual void pprint() override;
-    virtual size_t setSize(size_t size) override
-    { 
-      return m_size - size, 
-      m_size = size; 
-    }
+
+    friend class HardDrive;
   };
 
   class Folder :public Entity{
@@ -61,16 +57,14 @@ namespace fat16{
   };
 
   class HardDrive{
-    size_t    m_amountOfClusters;
-    size_t    m_amountOfDefectedClusters;
-    size_t    m_amountOfAllocatedClusters;
+    std::vector<size_t> m_clusters;
   public:
-    HardDrive(size_t amountOfClusters, size_t amountOfDefectedClusters) :m_amountOfClusters(amountOfClusters), m_amountOfDefectedClusters(amountOfDefectedClusters){}
-    Entity* createFile(Entity* folder, size_t size);
-    bool resizeFile(Entity* file, size_t size){ return *file <= size ? false : (m_amountOfAllocatedClusters -= file->setSize(size), true); }
+    HardDrive(size_t amountOfClusters, size_t amountOfDefectedClusters);
+    Entity* createFile(Entity* folder, std::string&, size_t size);
+    bool resizeFile(Entity* file, size_t size);
   };
 
-  template<size_t _AmountOfClusters, size_t _AmountOfDefectedClusters>
+  template<size_t _AmountOfClusters = 256, size_t _AmountOfDefectedClusters = 25>
   class FAT16{
     HardDrive   m_drive;
     Folder      m_root;
