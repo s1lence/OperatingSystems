@@ -52,8 +52,9 @@ fat16::Entity* fat16::HardDrive::createFile(Entity* folder, std::string& name, s
   size_t count = 0, prev = 0, first = 0;
 
   for (size_t i = 0; count <= size && i < m_clusters.size(); ++i){
-    if (0 == m_clusters[i]){ 
+    if (m_clusters[i] == 247) continue;
 
+    if (0 == m_clusters[i]){
       if (!first) first = i;
 
       if (count == size)
