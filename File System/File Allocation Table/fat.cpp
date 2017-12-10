@@ -22,22 +22,52 @@ void fat16::File::print(size_t offset) const
   std::cout << R"(Name: ")" << m_name << R"(", Type: File, Clusters allocated:)" << std::endl;
 }
 
-void fat16::Folder::remove(std::string& name)
+fat16::Folder::~Folder()
+{
+
+}
+
+void fat16::Folder::removeEntity(std::string& name, bool recursively /*= true*/)
+{
+
+}
+
+void fat16::Folder::removeFile(std::string& name, bool recursively)
 {
   for (auto i = m_members.begin(); i != m_members.end(); ++i){
     if (**i == name){ delete *i; m_members.erase(i); }
 
-    if (nullptr != dynamic_cast<Folder*>(*i)) dynamic_cast<Folder*>(*i)->remove(name);
+    if (recursively && nullptr != dynamic_cast<Folder*>(*i)) dynamic_cast<Folder*>(*i)->removeFile(name);
   }
 }
 
-fat16::Entity* fat16::Folder::find(std::string& name)
+void fat16::Folder::removeFolder(std::string& name, bool recursively /*= true*/)
 {
+
+}
+
+fat16::Entity* fat16::Folder::findFile(std::string& name)
+{
+  Entity* res;
   for (auto &i : m_members){
-    if (nullptr != dynamic_cast<Folder*>(i)) return dynamic_cast<Folder*>(i)->find(name);
+    if (nullptr != dynamic_cast<Folder*>(i)) res = dynamic_cast<Folder*>(i)->findFile(name);
+    if (nullptr != res) return res;
     if (*i == name) return i;
   }
   
+  return nullptr;
+}
+
+fat16::Entity* fat16::Folder::findFolder(std::string& name)
+{
+  if (m_name == name) return this;
+  
+  Entity* res;
+  for (auto &i : m_members){
+    if (nullptr != dynamic_cast<Folder*>(i)) res = dynamic_cast<Folder*>(i)->findFolder(name);
+    if (nullptr != res) return res;
+  }
+
   return nullptr;
 }
 
@@ -55,7 +85,7 @@ fat16::HardDrive::HardDrive(size_t amountOfClusters, size_t amountOfDefectedClus
   for (size_t i = 0; i < amountOfClusters; ++i) if (i % k == 2) m_clusters[i] = 247;  //f7 means defected cluster
 }
 
-fat16::Entity* fat16::HardDrive::createFile(Entity* folder, std::string& name, size_t size)
+fat16::Entity* fat16::HardDrive::createFile(std::string& name, size_t size)
 {
   size_t count = 0, prev = 0, first = 0;
 
@@ -78,8 +108,7 @@ fat16::Entity* fat16::HardDrive::createFile(Entity* folder, std::string& name, s
 
   if (count < size) return nullptr; /* not enough memory */
 
-  Entity* ptr = new File(name, size, first);
-  return ptr;
+  return new File(name, size, first);
 }
 
 bool fat16::HardDrive::resizeFile(Entity* file, size_t size)
@@ -121,16 +150,7 @@ void fat16::HardDrive::printFile(Entity* file, size_t offset)
 
     std::cout << std::setw(3) << std::hex << m_clusters[j];
   }
-  
-  
-  /*
 
-  File* tmp = dynamic_cast<File*>(file);
-  std::cout << "Name: " << tmp->m_name << ", cluster list: ";
-
-  for (size_t i = tmp->m_cluster, count = 0; count <= tmp->m_size; ++count, i = m_clusters[i])
-    std::cout << std::setw(3) << std::hex << m_clusters[i];
-*/
   std::cout << std::endl;
 }
 

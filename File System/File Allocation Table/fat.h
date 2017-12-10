@@ -31,7 +31,7 @@ namespace fat16{
     virtual bool operator==(std::string&){ return false; }
     virtual bool operator==(Entity*){ return false; }
     virtual bool operator<=(size_t){ return false; }
-    virtual void print(size_t offset) const;
+    virtual void print(size_t offset) const = 0;
   };
 
   class File :public Entity{
@@ -53,9 +53,17 @@ namespace fat16{
   public:
     Folder(const char * cstr) :m_name(cstr){}
     Folder(std::string&& str) :m_name(str){}
-    void add(Entity* file){ m_members.push_back(file); }
-    void remove(std::string& name);
-    Entity* find(std::string& name);
+    virtual ~Folder() override;
+
+    void add(Entity* ent){ m_members.push_back(ent); }
+
+    void removeEntity(std::string& name, bool recursively = true);
+    void removeFile(std::string& name, bool recursively = true);
+    void removeFolder(std::string& name, bool recursively = true);
+
+    Entity* findFile(std::string& name);
+    Entity* findFolder(std::string& name);
+    
     virtual void print(size_t offset) const override;
   };
 
@@ -63,7 +71,7 @@ namespace fat16{
     std::vector<size_t> m_clusters;
   public:
     HardDrive(size_t amountOfClusters, size_t amountOfDefectedClusters);
-    Entity* createFile(Entity* folder, std::string&, size_t size);
+    Entity* createFile(std::string&, size_t size);
     bool resizeFile(Entity* file, size_t size);
     void printFile(Entity*, size_t offsetfile);
     void print(size_t length = 0);
@@ -76,10 +84,44 @@ namespace fat16{
   public:
     FAT16() :m_drive(_AmountOfClusters, _AmountOfDefectedClusters), m_root("Root"){}
 
-    void createNewFile(std::string name, size_t size);
-    void eraseFile(std::string name){ m_drive.resizeFile(m_root.find(name), 0); m_root.remove(name); }
+    bool createNewFile(std::string name, std::string folder, size_t size);
+    void eraseFile(std::string name){ m_drive.resizeFile(m_root.findFile(name), 0); m_root.removeFile(name); }
 
+    bool createNewFolder(std::string name, std::string folder);
+    void eraseFolder(std::string name);
+
+    void printMemory(size_t amount = 0){ m_drive.print(amount); }
+    void printFile(std::string&& name){ m_drive.printFile(name); }
   };
+
+  template<size_t _AmountOfClusters /*= 256*/, size_t _AmountOfDefectedClusters /*= 25*/>
+  bool fat16::FAT16<_AmountOfClusters, _AmountOfDefectedClusters>::createNewFile(std::string name, std::string folder, size_t size)
+  {
+    Folder* fld = m_root.findFolder(folder);
+    if (nullptr == fld) return false;
+
+    fld->add(m_drive.createFile(name, size));
+    return true;
+  }
+
+  template<size_t _AmountOfClusters /*= 256*/, size_t _AmountOfDefectedClusters /*= 25*/>
+  bool fat16::FAT16<_AmountOfClusters, _AmountOfDefectedClusters>::createNewFolder(std::string name, std::string folder)
+  {
+    Folder* fld = m_root.findFolder(folder);
+    if (nullptr == fld) return false;
+
+    fld->add(new Folder(name));
+    return true;
+  }
+
+  template<size_t _AmountOfClusters /*= 256*/, size_t _AmountOfDefectedClusters /*= 25*/>
+  void fat16::FAT16<_AmountOfClusters, _AmountOfDefectedClusters>::eraseFolder(std::string name)
+  {
+    Folder* fld = m_root.findFolder(folder);
+    if (nullptr == fld) return;
+
+    delete fld;
+  }
 
 }
 
