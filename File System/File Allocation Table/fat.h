@@ -51,6 +51,8 @@ namespace fat16{
     std::vector<Entity*>    m_members;
     std::string             m_name;
   public:
+    Folder(const char * cstr) :m_name(cstr){}
+    Folder(std::string&& str) :m_name(str){}
     void add(Entity* file){ m_members.push_back(file); }
     void remove(std::string& name);
     Entity* find(std::string& name);
@@ -63,7 +65,7 @@ namespace fat16{
     HardDrive(size_t amountOfClusters, size_t amountOfDefectedClusters);
     Entity* createFile(Entity* folder, std::string&, size_t size);
     bool resizeFile(Entity* file, size_t size);
-    void printFile(Entity* file);
+    void printFile(Entity*, size_t offsetfile);
     void print(size_t length = 0);
   };
 
@@ -72,7 +74,7 @@ namespace fat16{
     HardDrive   m_drive;
     Folder      m_root;
   public:
-    FAT16() :m_drive(_AmountOfClusters, _AmountOfDefectedClusters){}
+    FAT16() :m_drive(_AmountOfClusters, _AmountOfDefectedClusters), m_root("Root"){}
 
     void createNewFile(std::string name, size_t size);
     void eraseFile(std::string name){ m_drive.resizeFile(m_root.find(name), 0); m_root.remove(name); }

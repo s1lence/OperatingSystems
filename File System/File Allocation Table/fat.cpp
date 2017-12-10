@@ -19,7 +19,7 @@
 void fat16::File::print(size_t offset) const
 {
   for (size_t i = 0; i < offset; ++i) std::cout << "--\--";
-
+  std::cout << R"(Name: ")" << m_name << R"(", Type: File, Clusters allocated:)" << std::endl;
 }
 
 void fat16::Folder::remove(std::string& name)
@@ -105,12 +105,25 @@ bool fat16::HardDrive::resizeFile(Entity* file, size_t size)
   return true;
 }
 
-void fat16::HardDrive::printFile(Entity* file)
+void fat16::HardDrive::printFile(Entity* file, size_t offset)
 {
   if (nullptr == file || !dynamic_cast<File*>(file)){
     std::cout << "Error: no such file found." << std::endl;
     return;
-  }/*
+  }
+  
+  File* tmp = dynamic_cast<File*>(file);
+  for (size_t i = 0, j = tmp->m_cluster; i <= tmp->m_size; ++i){
+    if (i % 5 == 0){
+      std::cout << std::endl;
+      for (size_t i = 0; i < offset; ++i) std::cout << "--\--";
+    }
+
+    std::cout << std::setw(3) << std::hex << m_clusters[j];
+  }
+  
+  
+  /*
 
   File* tmp = dynamic_cast<File*>(file);
   std::cout << "Name: " << tmp->m_name << ", cluster list: ";
