@@ -54,6 +54,8 @@ namespace fat16{
     Folder(const char * cstr) :m_name(cstr){}
     Folder(std::string&& str) :m_name(str){}
     virtual ~Folder() override;
+    virtual bool operator==(std::string& str) override{ return m_name == str; }
+    virtual bool operator==(Entity* ent) override{ return nullptr != dynamic_cast<Folder*>(ent) ? m_name == dynamic_cast<Folder*>(ent)->m_name : false; }
 
     void add(Entity* ent){ m_members.push_back(ent); }
 

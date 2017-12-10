@@ -24,18 +24,26 @@ void fat16::File::print(size_t offset) const
 
 fat16::Folder::~Folder()
 {
-
+  for (auto &i : m_members)
+    delete i;
+  /*
+   *	memory cleanup required: HOW TO CLEAN MEMORY FROM HERE ???
+   */
 }
 
 void fat16::Folder::removeEntity(std::string& name, bool recursively /*= true*/)
 {
+  for (auto i = m_members.begin(); i != m_members.end(); ++i){
+    if (**i == name){ delete *i; m_members.erase(i); return; }
 
+    if (recursively && nullptr != dynamic_cast<Folder*>(*i)) dynamic_cast<Folder*>(*i)->removeFile(name);
+  }
 }
 
 void fat16::Folder::removeFile(std::string& name, bool recursively)
 {
   for (auto i = m_members.begin(); i != m_members.end(); ++i){
-    if (**i == name){ delete *i; m_members.erase(i); }
+    if (**i == name && nullptr != dynamic_cast<File*>(*i)){ delete *i; m_members.erase(i); return; }
 
     if (recursively && nullptr != dynamic_cast<Folder*>(*i)) dynamic_cast<Folder*>(*i)->removeFile(name);
   }
@@ -43,7 +51,11 @@ void fat16::Folder::removeFile(std::string& name, bool recursively)
 
 void fat16::Folder::removeFolder(std::string& name, bool recursively /*= true*/)
 {
+  for (auto i = m_members.begin(); i != m_members.end(); ++i){
+    if (**i == name && nullptr != dynamic_cast<Folder*>(*i)){ delete *i; m_members.erase(i); return; }
 
+    if (recursively && nullptr != dynamic_cast<Folder*>(*i)) dynamic_cast<Folder*>(*i)->removeFile(name);
+  }
 }
 
 fat16::Entity* fat16::Folder::findFile(std::string& name)
