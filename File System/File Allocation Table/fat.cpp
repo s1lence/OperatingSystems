@@ -16,6 +16,12 @@
 
 #include "fat.h"
 
+void fat16::File::print(size_t offset) const
+{
+  for (size_t i = 0; i < offset; ++i) std::cout << "--\--";
+
+}
+
 void fat16::Folder::remove(std::string& name)
 {
   for (auto i = m_members.begin(); i != m_members.end(); ++i){
@@ -33,6 +39,13 @@ fat16::Entity* fat16::Folder::find(std::string& name)
   }
   
   return nullptr;
+}
+
+void fat16::Folder::print(size_t offset) const
+{
+  for (size_t i = 0; i < offset; ++i) std::cout << "--\--";
+  std::cout << R"(Name: ")" << m_name << R"(", Type: Folder, Members:)";
+  for (auto i : m_members) i->print(offset + 1);
 }
 
 fat16::HardDrive::HardDrive(size_t amountOfClusters, size_t amountOfDefectedClusters)
@@ -97,14 +110,14 @@ void fat16::HardDrive::printFile(Entity* file)
   if (nullptr == file || !dynamic_cast<File*>(file)){
     std::cout << "Error: no such file found." << std::endl;
     return;
-  }
+  }/*
 
   File* tmp = dynamic_cast<File*>(file);
   std::cout << "Name: " << tmp->m_name << ", cluster list: ";
 
   for (size_t i = tmp->m_cluster, count = 0; count <= tmp->m_size; ++count, i = m_clusters[i])
     std::cout << std::setw(3) << std::hex << m_clusters[i];
-
+*/
   std::cout << std::endl;
 }
 

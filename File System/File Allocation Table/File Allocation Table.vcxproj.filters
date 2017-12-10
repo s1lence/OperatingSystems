@@ -23,5 +23,8 @@
     <ClCompile Include="fat.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="entry.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

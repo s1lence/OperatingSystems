@@ -67,6 +67,7 @@
     <ClInclude Include="fat.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="entry.cpp" />
     <ClCompile Include="fat.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

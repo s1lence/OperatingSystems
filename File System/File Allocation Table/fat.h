@@ -31,6 +31,7 @@ namespace fat16{
     virtual bool operator==(std::string&){ return false; }
     virtual bool operator==(Entity*){ return false; }
     virtual bool operator<=(size_t){ return false; }
+    virtual void print(size_t offset) const;
   };
 
   class File :public Entity{
@@ -42,16 +43,18 @@ namespace fat16{
     virtual bool operator==(std::string& str) override{ return m_name == str; }
     virtual bool operator==(Entity* ent) override{ return nullptr != dynamic_cast<File*>(ent) ? m_name == dynamic_cast<File*>(ent)->m_name : false; }
     virtual bool operator<=(size_t size) override{ return m_size <= size; }
-
+    virtual void print(size_t offset) const override;
     friend class HardDrive;
   };
 
   class Folder :public Entity{
     std::vector<Entity*>    m_members;
+    std::string             m_name;
   public:
     void add(Entity* file){ m_members.push_back(file); }
     void remove(std::string& name);
     Entity* find(std::string& name);
+    virtual void print(size_t offset) const override;
   };
 
   class HardDrive{
@@ -71,7 +74,9 @@ namespace fat16{
   public:
     FAT16() :m_drive(_AmountOfClusters, _AmountOfDefectedClusters){}
 
+    void createNewFile(std::string name, size_t size);
     void eraseFile(std::string name){ m_drive.resizeFile(m_root.find(name), 0); m_root.remove(name); }
+
   };
 
 }
