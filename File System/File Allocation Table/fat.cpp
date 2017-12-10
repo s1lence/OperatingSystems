@@ -16,11 +16,6 @@
 
 #include "fat.h"
 
-void fat16::File::pprint()
-{
-
-}
-
 void fat16::Folder::remove(std::string& name)
 {
   for (auto i = m_members.begin(); i != m_members.end(); ++i){
@@ -76,7 +71,7 @@ fat16::Entity* fat16::HardDrive::createFile(Entity* folder, std::string& name, s
 
 bool fat16::HardDrive::resizeFile(Entity* file, size_t size)
 {
-  if (*file <= size) return false;
+  if (*file <= size || nullptr == dynamic_cast<File*>(file)) return false;
   
   size_t i, count;
   for (i = dynamic_cast<File*>(file)->m_cluster, count = 0; i != 255; ++i){
@@ -95,4 +90,31 @@ bool fat16::HardDrive::resizeFile(Entity* file, size_t size)
   m_clusters[i] = 0;
   dynamic_cast<File*>(file)->m_size = size;
   return true;
+}
+
+void fat16::HardDrive::printFile(Entity* file)
+{
+  if (nullptr == file || !dynamic_cast<File*>(file)){
+    std::cout << "Error: no such file found." << std::endl;
+    return;
+  }
+
+  File* tmp = dynamic_cast<File*>(file);
+  std::cout << "Name: " << tmp->m_name << ", cluster list: ";
+
+  for (size_t i = tmp->m_cluster, count = 0; count <= tmp->m_size; ++count, i = m_clusters[i])
+    std::cout << std::setw(3) << std::hex << m_clusters[i];
+
+  std::cout << std::endl;
+}
+
+void fat16::HardDrive::print(size_t length /*= 0*/)
+{
+  if (!length) length = m_clusters.size();
+  std::cout << "Memory map:";
+
+  for (size_t i = 0; i < length; ++i){
+    if (i % 10 == 0) std::cout << i / 10 * 10 << std::endl;
+    std::cout << std::setw(3) << std::hex << m_clusters[i];
+  }
 }

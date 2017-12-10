@@ -18,6 +18,7 @@
 #ifndef _FAT_H_
 #define _FAT_H_
 
+#include<iomanip>
 #include<iostream>
 #include<string>
 #include<vector>
@@ -27,7 +28,6 @@ namespace fat16{
   class Entity{
   public:
     virtual ~Entity() = 0;
-    virtual void pprint() = 0;
     virtual bool operator==(std::string&){ return false; }
     virtual bool operator==(Entity*){ return false; }
     virtual bool operator<=(size_t){ return false; }
@@ -42,7 +42,6 @@ namespace fat16{
     virtual bool operator==(std::string& str) override{ return m_name == str; }
     virtual bool operator==(Entity* ent) override{ return nullptr != dynamic_cast<File*>(ent) ? m_name == dynamic_cast<File*>(ent)->m_name : false; }
     virtual bool operator<=(size_t size) override{ return m_size <= size; }
-    virtual void pprint() override;
 
     friend class HardDrive;
   };
@@ -50,7 +49,6 @@ namespace fat16{
   class Folder :public Entity{
     std::vector<Entity*>    m_members;
   public:
-    virtual void pprint() override{ for (auto i : m_members)i->pprint(); }
     void add(Entity* file){ m_members.push_back(file); }
     void remove(std::string& name);
     Entity* find(std::string& name);
@@ -62,6 +60,8 @@ namespace fat16{
     HardDrive(size_t amountOfClusters, size_t amountOfDefectedClusters);
     Entity* createFile(Entity* folder, std::string&, size_t size);
     bool resizeFile(Entity* file, size_t size);
+    void printFile(Entity* file);
+    void print(size_t length = 0);
   };
 
   template<size_t _AmountOfClusters = 256, size_t _AmountOfDefectedClusters = 25>
