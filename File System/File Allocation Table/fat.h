@@ -95,7 +95,9 @@ namespace fat16{
     void eraseFile(std::string name){ /*m_drive.resizeFile(m_root.findFile(name), 0);*/ m_root.removeFile(name); }
 
     bool createNewFolder(std::string name, std::string folder);
-    void eraseFolder(std::string name);
+    void eraseFolder(std::string name){ m_root.removeFolder(name); }
+
+    void resizeFile(std::string name, size_t size){ m_drive.resizeFile(m_root.findFile(name), size); }
 
     void printMemory(size_t amount = 0){ m_drive.print(amount); }
     void printFile(std::string&& name){ m_drive.printFile(name); }
@@ -120,15 +122,6 @@ namespace fat16{
 
     dynamic_cast<Folder*>(fld)->add(new Folder(name));
     return true;
-  }
-
-  template<size_t _AmountOfClusters /*= 256*/, size_t _AmountOfDefectedClusters /*= 25*/>
-  void fat16::FAT16<_AmountOfClusters, _AmountOfDefectedClusters>::eraseFolder(std::string name)
-  {
-    Folder* fld = m_root.findFolder(folder);
-    if (nullptr == fld) return;
-
-    delete fld;
   }
 
 }

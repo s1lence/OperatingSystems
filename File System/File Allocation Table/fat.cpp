@@ -203,7 +203,7 @@ void fat16::HardDrive::print(size_t length /*= 0*/)
   std::cout << "Memory map:";
 
   for (size_t i = 0; i < length; ++i){
-    if (i % 10 == 0) std::cout << std::endl << std::setw(4) << i / 10 * 10 << " |";
+    if (i % 30 == 0) std::cout << std::endl << std::setw(4) << i / 10 * 10 << " |";
     std::cout << std::setw(4) << std::hex << m_clusters[i];
   }
 }
