@@ -1,7 +1,7 @@
 /*
  * `file`          entry.cpp
  * `written`       December 10 2017 15:05:44
- * `last modified` December 10 2017 15:05:44
+ * `last modified` December 11 2017 19:46:06
  * 
  * Author:         R. Neshta
  * Contact:        Ruslan.Neshta@gmail.com
