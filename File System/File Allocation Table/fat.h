@@ -27,7 +27,7 @@ namespace fat16{
 
   class Entity{
   public:
-    virtual ~Entity() = 0;
+    virtual ~Entity() = default;
     virtual bool operator==(std::string&){ return false; }
     virtual bool operator==(Entity*){ return false; }
     virtual bool operator<=(size_t){ return false; }
@@ -84,12 +84,12 @@ namespace fat16{
     friend class File;
   };
 
-  template<size_t _AmountOfClusters = 256, size_t _AmountOfDefectedClusters = 25>
+  template<size_t _AmountOfClusters = 256, size_t _AmountOfDefectedClusters = 50>
   class FAT16{
     HardDrive   m_drive;
     Folder      m_root;
   public:
-    FAT16() :m_drive(_AmountOfClusters, _AmountOfDefectedClusters), m_root("Root"){}
+    FAT16() :m_drive(_AmountOfClusters, _AmountOfDefectedClusters), m_root("~"){}
 
     bool createNewFile(std::string name, std::string folder, size_t size);
     void eraseFile(std::string name){ m_drive.resizeFile(m_root.findFile(name), 0); m_root.removeFile(name); }

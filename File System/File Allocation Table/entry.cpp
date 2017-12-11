@@ -20,7 +20,10 @@ int main(){
 
   fat16::FAT16<> fs;
 
+  fs.createNewFolder("new folder", "~");
+  fs.createNewFile("paint.exe", "new folder", 10);
 
+  fs.printMemory();
 
 
   return 0;

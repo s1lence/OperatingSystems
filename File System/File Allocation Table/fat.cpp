@@ -67,7 +67,7 @@ void fat16::Folder::removeFolder(std::string& name, bool recursively /*= true*/)
 
 fat16::Entity* fat16::Folder::findFile(std::string& name)
 {
-  Entity* res;
+  Entity* res = nullptr;
   for (auto &i : m_members){
     if (nullptr != dynamic_cast<Folder*>(i)) res = dynamic_cast<Folder*>(i)->findFile(name);
     if (nullptr != res) return res;
@@ -81,7 +81,7 @@ fat16::Entity* fat16::Folder::findFolder(std::string& name)
 {
   if (m_name == name) return this;
   
-  Entity* res;
+  Entity* res = nullptr;
   for (auto &i : m_members){
     if (nullptr != dynamic_cast<Folder*>(i)) res = dynamic_cast<Folder*>(i)->findFolder(name);
     if (nullptr != res) return res;
@@ -99,9 +99,12 @@ void fat16::Folder::print(size_t offset) const
 
 fat16::HardDrive::HardDrive(size_t amountOfClusters, size_t amountOfDefectedClusters)
 {
-  for (auto &i : m_clusters) i = 0;
+  m_clusters.reserve(amountOfClusters);
+  for (size_t i = 0; i < amountOfClusters; ++i) m_clusters.push_back(0);
+
   auto k = amountOfClusters / amountOfDefectedClusters;
-  for (size_t i = 0; i < amountOfClusters; ++i) if (i % k == 2) m_clusters[i] = 247;  //f7 means defected cluster
+  for (size_t i = 0; i < amountOfClusters; ++i) 
+    if (i % k == 2) m_clusters[i] = 247;  //f7 means defected cluster
 }
 
 fat16::Entity* fat16::HardDrive::createFile(std::string& name, size_t size)
@@ -179,7 +182,7 @@ void fat16::HardDrive::print(size_t length /*= 0*/)
   std::cout << "Memory map:";
 
   for (size_t i = 0; i < length; ++i){
-    if (i % 10 == 0) std::cout << i / 10 * 10 << std::endl;
-    std::cout << std::setw(3) << std::hex << m_clusters[i];
+    if (i % 10 == 0) std::cout << std::endl << std::setw(4) << i / 10 * 10 << " |";
+    std::cout << std::setw(4) << std::hex << m_clusters[i];
   }
 }
