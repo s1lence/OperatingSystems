@@ -34,6 +34,9 @@ int main(){
   fs.createNewFile("useless.txt", "trash", 8);
   fs.createNewFile("output.csv", "trash", 17);
 
+  fs.eraseFile("paint.exe");
+  fs.eraseFile("useless.txt");
+
   fs.printAll();
 
   fs.printMemory();

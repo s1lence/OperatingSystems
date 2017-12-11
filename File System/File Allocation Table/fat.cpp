@@ -156,9 +156,11 @@ bool fat16::HardDrive::resizeFile(Entity* file, size_t size)
 {
   if (*file <= size || nullptr == dynamic_cast<File*>(file)) return false;
   
-  size_t i, count;
-  for (i = dynamic_cast<File*>(file)->m_cluster, count = 0; i != 255; ++i){
+  size_t i, j, count;
+  for (i = dynamic_cast<File*>(file)->m_cluster, j = 0, count = 0; i != 255; i = j){
     
+    j = m_clusters[i];
+
     if (count == size){
       m_clusters[i] = 0;
       continue;
