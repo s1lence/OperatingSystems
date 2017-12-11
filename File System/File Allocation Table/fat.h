@@ -92,7 +92,7 @@ namespace fat16{
     FAT16() :m_drive(_AmountOfClusters, _AmountOfDefectedClusters), m_root("~"){}
 
     bool createNewFile(std::string name, std::string folder, size_t size);
-    void eraseFile(std::string name){ /*m_drive.resizeFile(m_root.findFile(name), 0);*/ m_root.removeFile(name); }
+    void eraseFile(std::string name){ m_root.removeFile(name); }
 
     bool createNewFolder(std::string name, std::string folder);
     void eraseFolder(std::string name){ m_root.removeFolder(name); }
