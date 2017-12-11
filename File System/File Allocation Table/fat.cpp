@@ -16,6 +16,16 @@
 
 #include "fat.h"
 
+fat16::File::~File()
+{
+  for (size_t i = m_cluster, count = 0; count <= m_size; ++i){
+    if (m_p2memory->m_clusters[i] == 247) continue;
+    
+    m_p2memory->m_clusters[i] = 0;
+    ++count;
+  }
+}
+
 void fat16::File::print(size_t offset) const
 {
   for (size_t i = 0; i < offset; ++i) std::cout << "--\--";
@@ -26,9 +36,6 @@ fat16::Folder::~Folder()
 {
   for (auto &i : m_members)
     delete i;
-  /*
-   *	memory cleanup required: HOW TO CLEAN MEMORY FROM HERE ???
-   */
 }
 
 void fat16::Folder::removeEntity(std::string& name, bool recursively /*= true*/)
@@ -120,7 +127,7 @@ fat16::Entity* fat16::HardDrive::createFile(std::string& name, size_t size)
 
   if (count < size) return nullptr; /* not enough memory */
 
-  return new File(name, size, first);
+  return new File(name, size, first, this);
 }
 
 bool fat16::HardDrive::resizeFile(Entity* file, size_t size)

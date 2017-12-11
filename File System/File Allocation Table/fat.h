@@ -34,12 +34,16 @@ namespace fat16{
     virtual void print(size_t offset) const = 0;
   };
 
+  class HardDrive;
+
   class File :public Entity{
     std::string   m_name;
     size_t        m_size;
     size_t        m_cluster;
+    HardDrive *   m_p2memory;
   public:
-    File(std::string& name, size_t size, size_t cluster) :m_name(name), m_size(size), m_cluster(cluster){}
+    File(std::string& name, size_t size, size_t cluster, HardDrive* p2memory) :m_name(name), m_size(size), m_cluster(cluster), m_p2memory(p2memory){}
+    virtual ~File() override;
     virtual bool operator==(std::string& str) override{ return m_name == str; }
     virtual bool operator==(Entity* ent) override{ return nullptr != dynamic_cast<File*>(ent) ? m_name == dynamic_cast<File*>(ent)->m_name : false; }
     virtual bool operator<=(size_t size) override{ return m_size <= size; }
@@ -77,6 +81,7 @@ namespace fat16{
     bool resizeFile(Entity* file, size_t size);
     void printFile(Entity*, size_t offsetfile);
     void print(size_t length = 0);
+    friend class File;
   };
 
   template<size_t _AmountOfClusters = 256, size_t _AmountOfDefectedClusters = 25>
