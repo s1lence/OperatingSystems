@@ -99,6 +99,7 @@ namespace fat16{
 
     void printMemory(size_t amount = 0){ m_drive.print(amount); }
     void printFile(std::string&& name){ m_drive.printFile(name); }
+    void printAll(){ m_root.print(0); }
   };
 
   template<size_t _AmountOfClusters /*= 256*/, size_t _AmountOfDefectedClusters /*= 25*/>

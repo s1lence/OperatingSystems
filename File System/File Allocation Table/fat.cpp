@@ -28,8 +28,19 @@ fat16::File::~File()
 
 void fat16::File::print(size_t offset) const
 {
-  for (size_t i = 0; i < offset; ++i) std::cout << "--\--";
-  std::cout << R"(Name: ")" << m_name << R"(", Type: File, Clusters allocated:)" << std::endl;
+  for (size_t i = 0; i < offset; ++i) std::cout << "   |";
+  std::cout << R"(Name: ")" << m_name << R"(", Type: File, Size: )" << std::dec << m_size << R"( Clusters allocated:)";
+
+  for (size_t i = 0, j = m_cluster; i <= m_size; ++i){
+    if (i % 20 == 0){
+      std::cout << std::endl;
+      for (size_t i = 0; i < offset; ++i) std::cout << "   |";
+    }
+
+    std::cout << std::setw(3) << std::hex << (j = m_p2memory->m_clusters[j]);
+  }
+
+  std::cout << std::endl << std::endl;
 }
 
 fat16::Folder::~Folder()
@@ -92,8 +103,8 @@ fat16::Entity* fat16::Folder::findFolder(std::string& name)
 
 void fat16::Folder::print(size_t offset) const
 {
-  for (size_t i = 0; i < offset; ++i) std::cout << "--\--";
-  std::cout << R"(Name: ")" << m_name << R"(", Type: Folder, Members:)";
+  for (size_t i = 0; i < offset; ++i) std::cout << "   |";
+  std::cout << R"(Name: ")" << m_name << R"(", Type: Folder, Members:)" << std::endl << std::endl;
   for (auto i : m_members) i->print(offset + 1);
 }
 
