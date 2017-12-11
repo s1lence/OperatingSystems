@@ -109,18 +109,18 @@ fat16::HardDrive::HardDrive(size_t amountOfClusters, size_t amountOfDefectedClus
 
 fat16::Entity* fat16::HardDrive::createFile(std::string& name, size_t size)
 {
-  size_t count = 0, prev = 0, first = 0;
+  long count = 0, prev = -1, first = -1;
 
   for (size_t i = 0; count <= size && i < m_clusters.size(); ++i){
     if (m_clusters[i] == 247) continue;
 
     if (0 == m_clusters[i]){
-      if (!first) first = i;
+      if (0 > first) first = i;
 
       if (count == size)
         m_clusters[i] = 255; /* ff means the eof symbol */
 
-      if (prev) 
+      if (0 <= prev)
         m_clusters[prev] = i;
       
       prev = i;      
@@ -128,7 +128,15 @@ fat16::Entity* fat16::HardDrive::createFile(std::string& name, size_t size)
     }
   }
 
-  if (count < size) return nullptr; /* not enough memory */
+  if (count < size){  /* cleanup memory */
+    for (size_t i = first, j = 0; i < m_clusters.size(); i = j){
+
+      j = m_clusters[i];
+      m_clusters[i] = 00;
+    }
+    
+    return nullptr; /* not enough memory */
+  }
 
   return new File(name, size, first, this);
 }

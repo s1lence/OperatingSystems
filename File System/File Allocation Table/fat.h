@@ -56,7 +56,7 @@ namespace fat16{
     std::string             m_name;
   public:
     Folder(const char * cstr) :m_name(cstr){}
-    Folder(std::string&& str) :m_name(str){}
+    Folder(std::string& str) :m_name(str){}
     virtual ~Folder() override;
     virtual bool operator==(std::string& str) override{ return m_name == str; }
     virtual bool operator==(Entity* ent) override{ return nullptr != dynamic_cast<Folder*>(ent) ? m_name == dynamic_cast<Folder*>(ent)->m_name : false; }
@@ -104,20 +104,20 @@ namespace fat16{
   template<size_t _AmountOfClusters /*= 256*/, size_t _AmountOfDefectedClusters /*= 25*/>
   bool fat16::FAT16<_AmountOfClusters, _AmountOfDefectedClusters>::createNewFile(std::string name, std::string folder, size_t size)
   {
-    Folder* fld = m_root.findFolder(folder);
+    Entity* fld = m_root.findFolder(folder);
     if (nullptr == fld) return false;
 
-    fld->add(m_drive.createFile(name, size));
+    dynamic_cast<Folder*>(fld)->add(m_drive.createFile(name, size));
     return true;
   }
 
   template<size_t _AmountOfClusters /*= 256*/, size_t _AmountOfDefectedClusters /*= 25*/>
   bool fat16::FAT16<_AmountOfClusters, _AmountOfDefectedClusters>::createNewFolder(std::string name, std::string folder)
   {
-    Folder* fld = m_root.findFolder(folder);
+    Entity* fld = m_root.findFolder(folder);
     if (nullptr == fld) return false;
 
-    fld->add(new Folder(name));
+    dynamic_cast<Folder*>(fld)->add(new Folder(name));
     return true;
   }
 
